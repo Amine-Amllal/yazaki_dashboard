@@ -1,0 +1,22 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import { SessionProvider } from "next-auth/react";
+
+export const metadata: Metadata = {
+  title: "YECMS - Yazaki Engineering Change Management",
+  description: "Plateforme de gestion des DFC et ECO - Yazaki Morocco Meknès",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="fr">
+      <body>
+        <SessionProvider>{children}</SessionProvider>
+      </body>
+    </html>
+  );
+}

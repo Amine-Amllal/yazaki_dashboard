@@ -1,0 +1,300 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Header from "@/components/Header";
+import { FiPlus, FiEdit, FiUserX, FiUserCheck, FiSearch, FiKey, FiClock } from "react-icons/fi";
+
+interface User {
+    id: string;
+    matricule: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    fonction: string;
+    role: string;
+    active: boolean;
+    createdAt: string;
+}
+
+export default function AdminUsersPage() {
+    const router = useRouter();
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
+    const [fonctionFilter, setFonctionFilter] = useState("");
+    const [roleFilter, setRoleFilter] = useState("");
+    const [statutFilter, setStatutFilter] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [form, setForm] = useState({
+        matricule: "",
+        nom: "",
+        prenom: "",
+        email: "",
+        password: "",
+        fonction: "PP_RESPONSIBLE",
+        role: "USER",
+    });
+
+    const fetchUsers = async () => {
+        const res = await fetch("/api/users");
+        const data = await res.json();
+        setUsers(data);
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchUsers(); }, []);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+    };
+
+    const openCreate = () => {
+        setEditingUser(null);
+        setForm({ matricule: "", nom: "", prenom: "", email: "", password: "", fonction: "PP_RESPONSIBLE", role: "USER" });
+        setShowModal(true);
+    };
+
+    const openEdit = (user: User) => {
+        setEditingUser(user);
+        setForm({
+            matricule: user.matricule,
+            nom: user.nom,
+            prenom: user.prenom,
+            email: user.email,
+            password: "",
+            fonction: user.fonction,
+            role: user.role,
+        });
+        setShowModal(true);
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            if (editingUser) {
+                const body: Record<string, unknown> = { ...form };
+                if (!form.password) delete body.password;
+                await fetch(`/api/users/${editingUser.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+            } else {
+                await fetch("/api/users", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(form),
+                });
+            }
+            setShowModal(false);
+            fetchUsers();
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const toggleActive = async (user: User) => {
+        await fetch(`/api/users/${user.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ active: !user.active }),
+        });
+        fetchUsers();
+    };
+
+    const resetPassword = async (userId: string) => {
+        const newPwd = prompt("Nouveau mot de passe :");
+        if (!newPwd) return;
+        await fetch(`/api/users/${userId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: newPwd }),
+        });
+        alert("Mot de passe réinitialisé !");
+    };
+
+    const fonctionLabel = (f: string) =>
+        f === "PP_RESPONSIBLE" ? "PP Responsible" :
+            f === "PP_TECHNICIAN" ? "PP Technician" : "PP Coordinator";
+
+    const filteredUsers = users.filter((u) => {
+        const matchSearch = !search || u.nom.toLowerCase().includes(search.toLowerCase()) ||
+            u.prenom.toLowerCase().includes(search.toLowerCase()) ||
+            u.matricule.toLowerCase().includes(search.toLowerCase()) ||
+            u.email.toLowerCase().includes(search.toLowerCase());
+        const matchFonction = !fonctionFilter || u.fonction === fonctionFilter;
+        const matchRole = !roleFilter || u.role === roleFilter;
+        const matchStatut = !statutFilter ||
+            (statutFilter === "active" && u.active) ||
+            (statutFilter === "inactive" && !u.active);
+        return matchSearch && matchFonction && matchRole && matchStatut;
+    });
+
+    return (
+        <>
+            <Header title="Gestion des utilisateurs" subtitle={`${users.length} utilisateurs`} />
+            <div className="page-content animate-in">
+                <div className="filters-bar">
+                    <div className="search-input">
+                        <FiSearch />
+                        <input
+                            type="text"
+                            placeholder="Rechercher par nom, matricule, email..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <select className="filter-select" value={fonctionFilter} onChange={(e) => setFonctionFilter(e.target.value)}>
+                        <option value="">Toutes les fonctions</option>
+                        <option value="PP_RESPONSIBLE">PP Responsible</option>
+                        <option value="PP_TECHNICIAN">PP Technician</option>
+                        <option value="PP_COORDINATOR">PP Coordinator</option>
+                    </select>
+                    <select className="filter-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                        <option value="">Tous les rôles</option>
+                        <option value="USER">Utilisateur</option>
+                        <option value="ADMIN">Administrateur</option>
+                    </select>
+                    <select className="filter-select" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
+                        <option value="">Tous les statuts</option>
+                        <option value="active">Actif</option>
+                        <option value="inactive">Inactif</option>
+                    </select>
+                    <button className="btn btn-primary" onClick={openCreate}>
+                        <FiPlus /> Nouvel utilisateur
+                    </button>
+                </div>
+
+                <div className="table-card">
+                    <div className="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Matricule</th>
+                                    <th>Nom</th>
+                                    <th>Prénom</th>
+                                    <th>Email</th>
+                                    <th>Fonction</th>
+                                    <th>Rôle</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    Array.from({ length: 3 }).map((_, i) => (
+                                        <tr key={i}>
+                                            {Array.from({ length: 8 }).map((_, j) => (
+                                                <td key={j}><div className="skeleton" style={{ height: 16, width: "80%" }} /></td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                ) : filteredUsers.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} style={{ textAlign: "center", padding: 40 }}>Aucun utilisateur trouvé</td>
+                                    </tr>
+                                ) : (
+                                    filteredUsers.map((user) => (
+                                        <tr key={user.id}>
+                                            <td><strong>{user.matricule}</strong></td>
+                                            <td>{user.nom}</td>
+                                            <td>{user.prenom}</td>
+                                            <td>{user.email}</td>
+                                            <td>{fonctionLabel(user.fonction)}</td>
+                                            <td>
+                                                <span className={`badge ${user.role === "ADMIN" ? "badge-info" : "badge-neutral"}`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className={`badge ${user.active ? "badge-success" : "badge-danger"}`}>
+                                                    {user.active ? "Actif" : "Inactif"}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: "flex", gap: 4 }}>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Modifier" onClick={() => openEdit(user)}>
+                                                        <FiEdit />
+                                                    </button>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title={user.active ? "Désactiver" : "Réactiver"} onClick={() => toggleActive(user)}>
+                                                        {user.active ? <FiUserX /> : <FiUserCheck />}
+                                                    </button>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Réinit. MDP" onClick={() => resetPassword(user.id)}>
+                                                        <FiKey />
+                                                    </button>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Historique" onClick={() => router.push(`/admin/users/${user.id}/history`)}>
+                                                        <FiClock />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Modal */}
+                {showModal && (
+                    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h3 className="modal-title">{editingUser ? "Modifier l'utilisateur" : "Nouvel utilisateur"}</h3>
+                                <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Matricule</label>
+                                <input type="text" name="matricule" className="form-input" value={form.matricule} onChange={handleChange} required />
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                                <div className="form-group">
+                                    <label className="form-label">Nom</label>
+                                    <input type="text" name="nom" className="form-input" value={form.nom} onChange={handleChange} required />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Prénom</label>
+                                    <input type="text" name="prenom" className="form-input" value={form.prenom} onChange={handleChange} required />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Email</label>
+                                <input type="email" name="email" className="form-input" value={form.email} onChange={handleChange} required />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">{editingUser ? "Nouveau mot de passe (laisser vide pour garder)" : "Mot de passe"}</label>
+                                <input type="password" name="password" className="form-input" value={form.password} onChange={handleChange} required={!editingUser} />
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                                <div className="form-group">
+                                    <label className="form-label">Fonction</label>
+                                    <select name="fonction" className="form-select" value={form.fonction} onChange={handleChange}>
+                                        <option value="PP_RESPONSIBLE">PP Responsible</option>
+                                        <option value="PP_TECHNICIAN">PP Technician</option>
+                                        <option value="PP_COORDINATOR">PP Coordinator</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Rôle</label>
+                                    <select name="role" className="form-select" value={form.role} onChange={handleChange}>
+                                        <option value="USER">Utilisateur</option>
+                                        <option value="ADMIN">Administrateur</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="form-actions">
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Annuler</button>
+                                <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                                    {saving ? <><span className="loading-spinner" /> Enregistrement...</> : editingUser ? "Modifier" : "Créer"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </>
+    );
+}

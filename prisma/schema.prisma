@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  matricule String   @unique
+  nom       String
+  prenom    String
+  email     String   @unique
+  password  String
+  fonction  String   @default("PP_RESPONSIBLE") // PP_RESPONSIBLE, PP_TECHNICIAN, PP_COORDINATOR
+  role      String   @default("USER") // USER, ADMIN
+  active    Boolean  @default(true)
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dfcs       DFC[]
+  histories  DFCHistory[]
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  dfcs      DFC[]
+}
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  dfcs      DFC[]
+}
+
+model Phase {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  dfcs      DFC[]
+}
+
+model DFC {
+  id                        String   @id @default(cuid())
+  numero                    Int      @unique
+  projectId                 String
+  familyId                  String
+  phaseId                   String
+  description               String
+  dateReception             DateTime
+  faisabilite               String   @default("EN_COURS") // OUI, NON, EN_COURS, A_CLARIFIER
+  dateReponse               DateTime?
+  typeDFC                   String   @default("T1") // T1, T2, T3, MISTAKED
+  delaiReponse              Int?     // in days
+  dateReceptionDerogation   DateTime?
+  numeroDerogation          String?
+  dateApplicationEstimee    DateTime?
+  dateApplicationDerogation DateTime?
+  commentaire               String?
+  createdById               String
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  project   Project      @relation(fields: [projectId], references: [id])
+  family    Family       @relation(fields: [familyId], references: [id])
+  phase     Phase        @relation(fields: [phaseId], references: [id])
+  createdBy User         @relation(fields: [createdById], references: [id])
+  histories DFCHistory[]
+}
+
+model DFCHistory {
+  id        String   @id @default(cuid())
+  dfcId     String
+  userId    String
+  field     String
+  oldValue  String?
+  newValue  String?
+  changedAt DateTime @default(now())
+
+  dfc  DFC  @relation(fields: [dfcId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+}

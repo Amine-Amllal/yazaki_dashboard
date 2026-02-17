@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80" fill="none">
+  <!-- Red Arrow/Geometric Shape -->
+  <polygon points="0,0 70,0 70,55 35,80 0,55" fill="#E60012"/>
+  <!-- YAZAKI Text -->
+  <text x="85" y="58" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#231F20" letter-spacing="3">YAZAKI</text>
+</svg>

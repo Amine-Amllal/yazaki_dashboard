@@ -1,0 +1,291 @@
+Total pages: 8
+
+--- PAGE 1 ---
+Yazaki Engineering Change
+Management System
+CAHIER DES CHARGES
+(YECMS)
+Partenariat Académique - Compétition Industrielle
+Client Yazaki Morocco Meknès (YMM)
+Durée du projet WK08 à WK17
+Participants 4 personnes
+Date 8 février 2026
+Team Yazaki
+Abdelali Laouge Team Manager
+Abdelhadi Ben Kaddour PP Coordinator
+Abdelhamid Chebel PP Responsible
+
+--- PAGE 2 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+Table des matières
+1 Présentation du projet 2
+1.1 Contexte . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.2 Problématique . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.3 Objectifs du projet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+2 Périmètre fonctionnel 2
+2.1 Vue d’ensemble . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+2.2 Fonctionnalités de l’interface utilisateur . . . . . . . . . . . . . . . . . . . . 2
+2.2.1 Gestion des DFC . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+2.2.2 Dashboard utilisateur . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+2.3 Fonctionnalités de l’interface administrateur . . . . . . . . . . . . . . . . . 4
+2.3.1 Dashboard administrateur . . . . . . . . . . . . . . . . . . . . . . . 4
+2.3.2 Gestion des utilisateurs . . . . . . . . . . . . . . . . . . . . . . . . . 5
+2.3.3 Gestion des données de référence . . . . . . . . . . . . . . . . . . . 5
+3 Critères d’acceptation 6
+3.1 Critères fonctionnels . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+3.2 Critères de qualité . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+4 Annexes 6
+4.1 Glossaire . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+4.2 Références . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+1
+
+--- PAGE 3 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+1 Présentation du projet
+1.1 Contexte
+Dans le cadre du partenariat établi entre Yazaki Morocco Meknès (YMM) et
+l’École Nationale Supérieure des Arts et Métiers de Meknès (ENSAM Mek-
+nès), une compétition industrielle est organisée afin de sélectionner quatre étudiants pour
+un stage au sein de l’entreprise. Le projet consiste à concevoir et développer une plate-
+forme web centralisée dédiée au suivi et à la gestion des DFC (Documents de Faisabilité
+de Changement) et des ECO (Engineering Change Orders), dans une démarche de digi-
+talisation adoptée par l’entreprise, visant à optimiser les processus, améliorer l’efficacité
+opérationnelle et renforcer la traçabilité.
+1.2 Problématique
+Actuellement, la gestion des DFC chez Yazaki Morocco Meknès nécessite une solution
+digitale permettant de :
+— Centraliser les DFCs
+— Suivre le statut de faisabilité de chaque DFC
+— Gérer les documents associés (rapports, dérogations)
+— Visualiser les statistiques et indicateurs de performance
+— Assurer la traçabilité complète du processus
+1.3 Objectifs du projet
+O1. Développer une application web responsive permettant la gestion complète des DFC
+O2. Mettre en place un système de formulaires pour la saisie et le suivi des DFC
+O3. Créer des dashboards analytiques pour les utilisateurs et administrateurs
+O4. Implémenter un système de gestion des utilisateurs
+O5. Assurer la traçabilité
+2 Périmètre fonctionnel
+2.1 Vue d’ensemble
+L’application comprendra deux interfaces principales :
+— Interface Utilisateur : pour la saisie et le suivi des DFC
+— Interface Administrateur : pour la supervision globale et la gestion des utilisa-
+teurs
+2.2 Fonctionnalités de l’interface utilisateur
+2.2.1 Gestion des DFC
+Création d’un DFC L’utilisateur dispose de deux méthodes pour créer un nouveau
+DFC :
+2
+
+--- PAGE 4 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+Méthode 1 : Saisie manuelle
+L’utilisateur remplit manuellement un formulaire comprenant les champs suivants :
+Méthode 2 : Import et extraction automatique
+L’utilisateur peut uploader un fichier DFC/Dérogation existant (Excel, pdf) et le système
+extrait automatiquement les données pour pré-remplir le formulaire. Cette fonctionnalité
+utilise :
+— OCR (Reconnaissance Optique de Caractères) pour les PDF scannés
+— Extraction de texte pour les PDF natifs
+— Parsing Excel/CSV pour les fichiers tableurs
+— Intelligence Artificielle pour identifier et mapper les champs automatiquement
+Le processus d’extraction automatique :
+1. L’utilisateur upload le fichier DFC/Derogation
+2. Le système détecte le format et extrait le texte
+3. L’IA identifie les champs pertinents (N° DFC, Projet, Description, N°Dérogation,
+etc.)
+4. Le formulaire est pré-rempli avec les données extraites
+5. L’utilisateur vérifie et corrige si nécessaire avant validation
+Champ Type Description
+N° DFC Number Numéro unique du DFC (auto-
+généré ou manuel)
+Projet Liste déroulante Sélection du projet concerné
+Famille Liste déroulante Catégorie/famille du produit
+Phase Liste déroulante Phase du projet
+Description de la DFC Texte long Description détaillée
+Date de réception du DFC Date Date d’enregistrement de la de-
+mande
+Faisabilité Bouton radio Oui / Non / En cours (OG) / À
+clarifier (NC)
+Date de réponse Date Date de la décision de faisabilité
+Type du DFC Liste déroulante T1, T2, T3, Mistaked
+Délai pour répondre à la Date Durée écoulée entre l’ajout d’une
+DFC DFC et la réponse apportée à
+celle-ci
+Date de réception de la Dé- Date Date de réception de la déroga-
+rogation tion
+N°Dérogation Number Numéro unique de la dérogation
+Date d’application estimée Date Date prévue d’application
+Date d’application de la dé- Date Date effective d’application
+rogation
+Commentaire Texte long Commentaires et remarques
+Table 1: Champs du formulaire DFC
+3
+
+[TABLE 1 on page 4]
+Champ | Type | Description
+N° DFC | Number | Numéro unique du DFC (auto-
+généré ou manuel)
+Projet | Liste déroulante | Sélection du projet concerné
+Famille | Liste déroulante | Catégorie/famille du produit
+Phase | Liste déroulante | Phase du projet
+Description de la DFC | Texte long | Description détaillée
+Date de réception du DFC | Date | Date d’enregistrement de la de-
+mande
+Faisabilité | Bouton radio | Oui / Non / En cours (OG) / À
+clarifier (NC)
+Date de réponse | Date | Date de la décision de faisabilité
+Type du DFC | Liste déroulante | T1, T2, T3, Mistaked
+Délai pour répondre à la
+DFC | Date | Durée écoulée entre l’ajout d’une
+DFC et la réponse apportée à
+celle-ci
+Date de réception de la Dé-
+rogation | Date | Date de réception de la déroga-
+tion
+N°Dérogation | Number | Numéro unique de la dérogation
+Date d’application estimée | Date | Date prévue d’application
+Date d’application de la dé-
+rogation | Date | Date effective d’application
+Commentaire | Texte long | Commentaires et remarques
+
+--- PAGE 5 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+Modification et consultation des DFC
+— Recherche de DFC par numéro, projet, ou autres critères
+— Modification des DFC existants
+— Consultation de l’historique des modifications
+2.2.2 Dashboard utilisateur
+Le dashboard utilisateur affichera les indicateurs suivants :
+Indicateur Description
+Nombre total de DFC Nombre de DFC
+DFC ouverts Nombre de DFC en attente de réponse
+DFC fermés Nombre de DFC traités (avec réponse)
+DFC par projet Répartition des DFC par projet
+DFC par type Graphique montrant T1, T2, T3, Mistaked
+Délais moyens de réponse Temps moyen entre réception et réponse
+ECO en cours Nombre d’ECO actifs
+Table 2 – Indicateurs du dashboard utilisateur
+2.3 Fonctionnalités de l’interface administrateur
+2.3.1 Dashboard administrateur
+Le dashboard administrateur offrira une vision globale et stratégique avec les éléments
+suivants :
+Indicateurs clés (KPI)
+— Nombre total de DFC reçus
+— Nombre de DFC répondus
+— Nombre d’ECO/Dérogation reçus
+— Nombre d’ECO répondus
+— DFC ouverts / DFC fermés (avec graphiques)
+— Taux de faisabilité moyen
+— Délais moyens de traitement
+Graphiques et visualisations
+— Évolution mensuelle des DFC et ECO
+— Répartition par type de DFC (T1, T2, T3, Mistaked)
+— Répartition par projet
+— Répartition par responsable
+— Indicateurs de performance par famille
+— Taux de respect des délais
+4
+
+[TABLE 1 on page 5]
+Indicateur | Description
+Nombre total de DFC | Nombre de DFC
+DFC ouverts | Nombre de DFC en attente de réponse
+DFC fermés | Nombre de DFC traités (avec réponse)
+DFC par projet | Répartition des DFC par projet
+DFC par type | Graphique montrant T1, T2, T3, Mistaked
+Délais moyens de réponse | Temps moyen entre réception et réponse
+ECO en cours | Nombre d’ECO actifs
+
+--- PAGE 6 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+Filtres avancés Le dashboard permettra de filtrer les données par :
+— Période (date de début et date de fin)
+— Projet
+— Famille de produits
+— Type de DFC
+— Statut (ouvert/fermé)
+— Responsable
+— Faisabilité (oui/non/OG/NC)
+2.3.2 Gestion des utilisateurs
+Création d’utilisateur L’administrateur peut créer de nouveaux utilisateurs avec les
+informations suivantes :
+Champ Description
+Matricule Identifiant unique de l’employé
+Nom Nom de famille
+Prénom Prénom
+Email Adresse email
+Fonction PP Responsible / PP Technician / PP Coordinator
+Mot de passe Mot de passe
+Table 3 – Champs de création d’utilisateur
+Gestion des utilisateurs
+— Liste de tous les utilisateurs avec recherche et tri
+— Modification des informations utilisateur
+— Désactivation / Réactivation de comptes
+— Réinitialisation de mot de passe
+— Historique des actions utilisateur
+2.3.3 Gestion des données de référence
+L’administrateur doit pouvoir gérer les listes de référence :
+— Liste des projets
+— Liste des familles de produits
+— Liste des phases
+— Configuration des types de DFC
+5
+
+[TABLE 1 on page 6]
+Champ | Description
+Matricule | Identifiant unique de l’employé
+Nom | Nom de famille
+Prénom | Prénom
+Email | Adresse email
+Fonction | PP Responsible / PP Technician / PP Coordinator
+Mot de passe | Mot de passe
+
+--- PAGE 7 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+3 Critères d’acceptation
+3.1 Critères fonctionnels
+Le projet sera considéré comme réussi si :
+1. Tous les formulaires fonctionnent correctement avec validation
+2. Les DFC peuvent être créés, modifiés, consultés et supprimés
+3. Les dashboards affichent les bonnes statistiques en temps réel
+4. Les filtres du dashboard administrateur fonctionnent
+5. Le système d’authentification
+3.2 Critères de qualité
+1. Interface intuitive et ergonomique
+2. Navigation fluide et cohérente
+3. Messages d’erreur clairs
+4. Documentation complète et claire
+5. Code propre et structuré (bonnes pratiques)
+4 Annexes
+4.1 Glossaire
+DFC/ECR Engineering Change Request/Design Feasibility Change - Demande de mo-
+dification listant les améliorations proposées ou les problèmes concernant les com-
+posants ou les assemblages
+ECO/Dérogation Engineering Change Order - Ordre de modification technique
+PP - Product Preparation
+KPI Key Performance Indicator - Indicateur clé de performance
+4.2 Références
+— Images de référence fournies par YMM
+— Documentation des processus DFC/ECO existants
+Figure 1 – DFC (ECR)
+Ce document constitue une DFC/ECR (Engineering Change request) utilisée pour
+formaliser une demande de modification technique au sein d’un projet.
+Le template ci-dessus présente les informations essentielles de la DFC, notamment :
+6
+
+--- PAGE 8 ---
+Cahier des Charges - Projet DFC Tracking Yazaki
+— N° DFC :12345
+— Projet : Renault
+— Famille : CABLAGE PORTE AR D
+— Phase : PPC
+— Sujet : Section Change
+Figure 2 – Dérogation
+Ce document constitue une dérogation (ECO – Engineering Change Order) émise dans
+le cadre du processus de suivi des modifications.
+— Projet : Renault
+— Phase : PPC
+— N° dérogation : DRG1111111-1
+— N°DFC : 12345
+7
