@@ -29,18 +29,36 @@ Built as part of an academic partnership between YMM and ENSAM Meknès, this sys
 
 ## Tech Stack
 
-| Layer         | Technology                                           |
+This project uses a **unified full-stack TypeScript** architecture — there is no separate backend server. Everything runs inside Next.js.
+
+### Frontend
+
+| Concern       | Technology                                           |
 | ------------- | ---------------------------------------------------- |
 | Framework     | [Next.js 16](https://nextjs.org) (App Router)       |
-| Language      | TypeScript                                           |
-| Auth          | NextAuth v5 (Credentials — email or matricule)      |
-| Database      | SQLite via [Prisma ORM](https://www.prisma.io)      |
-| AI / LLM      | Google Gemini 2.5 Flash (`@google/genai`)           |
-| OCR           | [Tesseract.js](https://tesseract.js.org) + [MuPDF](https://mupdf.com) |
+| UI            | React 19 (Server + Client Components)               |
 | Charts        | [Recharts](https://recharts.org)                     |
-| Validation    | [Zod](https://zod.dev)                                |
-| Styling       | CSS Modules                                          |
 | Icons         | react-icons                                          |
+| Styling       | CSS Modules                                          |
+| Fonts         | Geist (via `next/font`)                              |
+
+### Backend (Next.js API Routes)
+
+| Concern              | Technology                                                        |
+| -------------------- | ----------------------------------------------------------------- |
+| API                  | Next.js **Route Handlers** (`src/app/api/...`) — REST endpoints   |
+| Language             | TypeScript                                                        |
+| Runtime              | Node.js                                                           |
+| Database             | **SQLite** (file-based) via [Prisma ORM](https://www.prisma.io)  |
+| Authentication       | **NextAuth v5** (Credentials provider, JWT strategy, bcrypt)      |
+| AI / LLM             | **Google Gemini 2.5 Flash** (`@google/genai`) — structured extraction |
+| OCR                  | [Tesseract.js](https://tesseract.js.org) (French + English)      |
+| PDF Rendering        | [MuPDF](https://mupdf.com) (PDF → PNG for OCR)                   |
+| PDF Text Extraction  | **pdf-parse** (native text)                                       |
+| Excel / CSV Parsing  | **xlsx**                                                          |
+| Validation           | [Zod](https://zod.dev)                                            |
+
+> There is **no Express, no Fastify, no separate backend process**. All server-side logic (OCR, PDF processing, Gemini API calls, database queries) runs as Next.js API routes in the `src/app/api/` directory.
 
 ---
 
