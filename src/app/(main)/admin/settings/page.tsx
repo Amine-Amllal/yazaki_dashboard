@@ -212,7 +212,7 @@ export default function AdminSettingsPage() {
                                                                 fontSize: 13,
                                                                 color: "var(--text)"
                                                             }}
-                                                            className="hover:bg-gray-100"
+                                                            className=""
                                                             onClick={() => {
                                                                 setOpenMenu(null);
                                                                 handleEdit(section.key, item);

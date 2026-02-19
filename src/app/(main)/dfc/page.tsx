@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
-import { FiSearch, FiPlus, FiEye, FiEdit, FiTrash2, FiClock } from "react-icons/fi";
-import HistoryModal from "@/components/HistoryModal";
+import { FiSearch, FiPlus, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
 
 interface DFC {
     id: string;

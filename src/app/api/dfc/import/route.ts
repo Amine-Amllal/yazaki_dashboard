@@ -250,7 +250,7 @@ Règles d'extraction :
             throw new Error("Quota Gemini épuisé (free tier). Réessayez dans quelques minutes.");
         }
         if (err.message?.includes("not found") || err.message?.includes("NOT_FOUND")) {
-            throw new Error("Modèle Gemini non disponible. Vérifiez que gemini-2.0-flash est accessible avec votre clé API.");
+            throw new Error("Modèle Gemini non disponible. Vérifiez que gemini-2.5-flash est accessible avec votre clé API.");
         }
 
         throw error; // Re-throw unexpected errors

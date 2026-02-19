@@ -2,7 +2,12 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/prisma"; // Import the singleton instance directly
+import prisma from "@/lib/prisma";
+
+const loginSchema = z.object({
+    email: z.string().min(1, "Email ou matricule requis"),
+    password: z.string().min(1, "Mot de passe requis"),
+});
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     providers: [
@@ -13,13 +18,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 password: { label: "Mot de passe", type: "password" },
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) return null;
+                const parsed = loginSchema.safeParse(credentials);
+                if (!parsed.success) return null;
+
+                const { email, password } = parsed.data;
 
                 const user = await prisma.user.findFirst({
                     where: {
                         OR: [
-                            { email: credentials.email as string },
-                            { matricule: credentials.email as string },
+                            { email },
+                            { matricule: email },
                         ],
                         active: true,
                     },
@@ -27,17 +35,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                 if (!user) return null;
 
-                const isValid = await bcrypt.compare(
-                    credentials.password as string,
-                    user.password
-                );
-
+                const isValid = await bcrypt.compare(password, user.password);
                 if (!isValid) return null;
 
                 return {
                     id: user.id,
                     email: user.email,
                     name: `${user.prenom} ${user.nom}`,
+                    image: null, // Ne PAS stocker l'image base64 dans le JWT (cause HTTP 431)
                     role: user.role,
                     matricule: user.matricule,
                     fonction: user.fonction,
@@ -46,25 +51,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger }) {
             if (user) {
-                const u = user as unknown as Record<string, unknown>;
-                token.role = u.role;
-                token.matricule = u.matricule;
-                token.fonction = u.fonction;
+                token.role = user.role;
+                token.matricule = user.matricule;
+                token.fonction = user.fonction;
                 token.userId = user.id;
-                token.picture = u.image as string | null | undefined;
+                // Ne PAS stocker token.picture (image base64 trop volumineuse pour le cookie)
+            }
+            // Rafraîchir le token depuis la BD quand update() est appelé
+            if (trigger === "update" && token.userId) {
+                const freshUser = await prisma.user.findUnique({
+                    where: { id: token.userId as string },
+                    select: { nom: true, prenom: true, email: true, role: true, fonction: true, matricule: true },
+                });
+                if (freshUser) {
+                    token.name = `${freshUser.prenom} ${freshUser.nom}`;
+                    token.email = freshUser.email;
+                    token.role = freshUser.role;
+                    token.fonction = freshUser.fonction;
+                    token.matricule = freshUser.matricule;
+                }
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
-                const u = session.user as unknown as Record<string, unknown>;
-                u.role = token.role;
-                u.matricule = token.matricule;
-                u.fonction = token.fonction;
-                u.id = token.userId;
-                session.user.image = token.picture as string | null;
+                session.user.id = token.userId as string;
+                session.user.role = token.role as string;
+                session.user.matricule = token.matricule as string;
+                session.user.fonction = token.fonction as string;
+                // image chargée séparément via /api/profile (pas dans le JWT)
             }
             return session;
         },

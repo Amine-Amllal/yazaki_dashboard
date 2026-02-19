@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { getAdminSessionOrFail, handleApiError } from "@/lib/api-helpers";
+import { createUserSchema } from "@/lib/validations";
 
 export async function GET() {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    if ((session.user as Record<string, unknown>)?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    }
+    const { error } = await getAdminSessionOrFail();
+    if (error) return error;
 
     const users = await prisma.user.findMany({
         select: {
@@ -29,25 +27,32 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    if ((session.user as Record<string, unknown>)?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    }
+    const { error } = await getAdminSessionOrFail();
+    if (error) return error;
 
     try {
         const body = await request.json();
-        const hashedPassword = await bcrypt.hash(body.password, 10);
+
+        const parsed = createUserSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { status: 400 }
+            );
+        }
+
+        const data = parsed.data;
+        const hashedPassword = await bcrypt.hash(data.password, 10);
 
         const user = await prisma.user.create({
             data: {
-                matricule: body.matricule,
-                nom: body.nom,
-                prenom: body.prenom,
-                email: body.email,
+                matricule: data.matricule,
+                nom: data.nom,
+                prenom: data.prenom,
+                email: data.email,
                 password: hashedPassword,
-                fonction: body.fonction || "PP_RESPONSIBLE",
-                role: body.role || "USER",
+                fonction: data.fonction || "PP_RESPONSIBLE",
+                role: data.role || "USER",
             },
             select: {
                 id: true,
@@ -62,11 +67,7 @@ export async function POST(request: NextRequest) {
         });
 
         return NextResponse.json(user, { status: 201 });
-    } catch (error) {
-        console.error("Error creating user:", error);
-        return NextResponse.json(
-            { error: "Erreur lors de la création de l'utilisateur" },
-            { status: 500 }
-        );
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la création de l'utilisateur");
     }
 }
