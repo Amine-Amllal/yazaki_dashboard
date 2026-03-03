@@ -25,7 +25,7 @@ export interface SidebarProps {
 export default function Sidebar({ collapsed, toggle }: SidebarProps) {
     const pathname = usePathname();
     const { data: session } = useSession();
-    const isAdmin = (session?.user as Record<string, unknown>)?.role === "ADMIN";
+    const isAdmin = session?.user?.role === "ADMIN";
 
     const userLinks = [
         { href: "/dashboard", label: "Dashboard", icon: <FiHome /> },

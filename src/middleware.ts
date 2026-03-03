@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Public routes
+    // Public routes — no auth required
     const publicPaths = ["/login", "/api/auth"];
     if (publicPaths.some((p) => pathname.startsWith(p))) {
         return NextResponse.next();
@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
         request.cookies.get("authjs.session-token")?.value ||
         request.cookies.get("__Secure-authjs.session-token")?.value;
 
-    if (!token && pathname !== "/login") {
+    if (!token) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 

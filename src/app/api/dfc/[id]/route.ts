@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
     const { id } = await params;
     const dfc = await prisma.dFC.findUnique({
@@ -37,89 +35,93 @@ export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
     const { id } = await params;
     const body = await request.json();
-    const userId = (session.user as Record<string, unknown>).id as string;
+    const userId = session.user.id;
 
     try {
-        // Get current DFC for history tracking
-        const currentDfc = await prisma.dFC.findUnique({ where: { id } });
-        if (!currentDfc) {
-            return NextResponse.json({ error: "DFC non trouvé" }, { status: 404 });
-        }
-
-        // Track changes
-        const fieldsToTrack = [
-            "description", "faisabilite", "typeDFC", "commentaire",
-            "projectId", "familyId", "phaseId", "numeroDerogation",
-        ];
-
-        const historyEntries = [];
-        for (const field of fieldsToTrack) {
-            const oldVal = (currentDfc as Record<string, unknown>)[field];
-            const newVal = body[field];
-            if (newVal !== undefined && String(oldVal) !== String(newVal)) {
-                historyEntries.push({
-                    dfcId: id,
-                    userId,
-                    field,
-                    oldValue: oldVal ? String(oldVal) : null,
-                    newValue: newVal ? String(newVal) : null,
-                });
+        // Use a transaction to ensure atomicity of update + history
+        const dfc = await prisma.$transaction(async (tx) => {
+            const currentDfc = await tx.dFC.findUnique({ where: { id } });
+            if (!currentDfc) {
+                throw new Error("DFC_NOT_FOUND");
             }
-        }
 
-        // Update DFC
-        const updateData: Record<string, unknown> = {};
-        const allowedFields = [
-            "projectId", "familyId", "phaseId", "description",
-            "faisabilite", "typeDFC", "commentaire", "numeroDerogation",
-        ];
+            // Track changes — proper null-safe comparison
+            const fieldsToTrack = [
+                "description", "faisabilite", "typeDFC", "commentaire",
+                "projectId", "familyId", "phaseId", "numeroDerogation",
+            ];
 
-        for (const field of allowedFields) {
-            if (body[field] !== undefined) {
-                updateData[field] = body[field];
+            const historyEntries = [];
+            for (const field of fieldsToTrack) {
+                const oldVal = (currentDfc as Record<string, unknown>)[field];
+                const newVal = body[field];
+                if (newVal !== undefined) {
+                    const oldStr = oldVal != null ? String(oldVal) : null;
+                    const newStr = newVal != null ? String(newVal) : null;
+                    if (oldStr !== newStr) {
+                        historyEntries.push({
+                            dfcId: id,
+                            userId,
+                            field,
+                            oldValue: oldStr,
+                            newValue: newStr,
+                        });
+                    }
+                }
             }
-        }
 
-        // Handle date fields
-        const dateFields = [
-            "dateReception", "dateReponse", "dateReceptionDerogation",
-            "dateApplicationEstimee", "dateApplicationDerogation",
-        ];
-        for (const field of dateFields) {
-            if (body[field] !== undefined) {
-                updateData[field] = body[field] ? new Date(body[field]) : null;
+            // Build update data
+            const updateData: Record<string, unknown> = {};
+            const allowedFields = [
+                "projectId", "familyId", "phaseId", "description",
+                "faisabilite", "typeDFC", "commentaire", "numeroDerogation",
+            ];
+
+            for (const f of allowedFields) {
+                if (body[f] !== undefined) {
+                    updateData[f] = body[f];
+                }
             }
-        }
 
-        if (body.delaiReponse !== undefined) {
-            updateData.delaiReponse = body.delaiReponse ? parseInt(body.delaiReponse) : null;
-        }
+            const dateFields = [
+                "dateReception", "dateReponse", "dateReceptionDerogation",
+                "dateApplicationEstimee", "dateApplicationDerogation",
+            ];
+            for (const f of dateFields) {
+                if (body[f] !== undefined) {
+                    updateData[f] = body[f] ? new Date(body[f]) : null;
+                }
+            }
 
-        const [dfc] = await Promise.all([
-            prisma.dFC.update({
+            if (body.delaiReponse !== undefined) {
+                updateData.delaiReponse = body.delaiReponse ? parseInt(body.delaiReponse) : null;
+            }
+
+            // Execute update + history atomically
+            const updated = await tx.dFC.update({
                 where: { id },
                 data: updateData,
                 include: { project: true, family: true, phase: true },
-            }),
-            ...(historyEntries.length > 0
-                ? [prisma.dFCHistory.createMany({ data: historyEntries })]
-                : []),
-        ]);
+            });
+
+            if (historyEntries.length > 0) {
+                await tx.dFCHistory.createMany({ data: historyEntries });
+            }
+
+            return updated;
+        });
 
         return NextResponse.json(dfc);
-    } catch (error) {
-        console.error("Error updating DFC:", error);
-        return NextResponse.json(
-            { error: "Erreur lors de la modification du DFC" },
-            { status: 500 }
-        );
+    } catch (err) {
+        if (err instanceof Error && err.message === "DFC_NOT_FOUND") {
+            return NextResponse.json({ error: "DFC non trouvé" }, { status: 404 });
+        }
+        return handleApiError(err, "Erreur lors de la modification du DFC");
     }
 }
 
@@ -127,20 +129,15 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
     const { id } = await params;
 
     try {
         await prisma.dFC.delete({ where: { id } });
         return NextResponse.json({ message: "DFC supprimé" });
-    } catch {
-        return NextResponse.json(
-            { error: "Erreur lors de la suppression" },
-            { status: 500 }
-        );
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la suppression");
     }
 }

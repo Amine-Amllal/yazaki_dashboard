@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -11,6 +12,20 @@ interface HeaderProps {
 export default function Header({ title, subtitle }: HeaderProps) {
     const { data: session } = useSession();
     const user = session?.user;
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    // Charger l'image depuis l'API (pas depuis le JWT pour éviter HTTP 431)
+    useEffect(() => {
+        if (user) {
+            fetch("/api/profile")
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.image) setProfileImage(data.image);
+                })
+                .catch(() => {});
+        }
+    }, [user]);
+
     const initials = user?.name
         ? user.name
             .split(" ")
@@ -18,6 +33,14 @@ export default function Header({ title, subtitle }: HeaderProps) {
             .join("")
             .toUpperCase()
         : "?";
+
+    const fonctionLabel = (() => {
+        const fonction = user?.fonction;
+        if (fonction === "PP_RESPONSIBLE") return "PP Responsible";
+        if (fonction === "PP_TECHNICIAN") return "PP Technician";
+        if (fonction === "PP_COORDINATOR") return "PP Coordinator";
+        return "Utilisateur";
+    })();
 
     return (
         <header className="header">
@@ -28,9 +51,9 @@ export default function Header({ title, subtitle }: HeaderProps) {
             <div className="header-right">
                 <Link href="/profile" style={{ textDecoration: "none" }}>
                     <div className="header-user">
-                        {user?.image ? (
+                        {profileImage ? (
                             <img
-                                src={user.image}
+                                src={profileImage}
                                 alt="Profile"
                                 className="header-avatar"
                                 style={{ objectFit: "cover" }}
@@ -41,13 +64,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                         <div className="header-user-info">
                             <div className="header-user-name">{user?.name || "Utilisateur"}</div>
                             <div className="header-user-role">
-                                {(user as Record<string, unknown>)?.fonction === "PP_RESPONSIBLE"
-                                    ? "PP Responsible"
-                                    : (user as Record<string, unknown>)?.fonction === "PP_TECHNICIAN"
-                                        ? "PP Technician"
-                                        : (user as Record<string, unknown>)?.fonction === "PP_COORDINATOR"
-                                            ? "PP Coordinator"
-                                            : "Utilisateur"}
+                                {fonctionLabel}
                             </div>
                         </div>
                     </div>

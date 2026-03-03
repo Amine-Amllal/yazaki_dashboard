@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import ChatBot from "@/components/ChatBot";
 
 export default function MainLayoutClient({
     children,
@@ -23,6 +24,7 @@ export default function MainLayoutClient({
             >
                 {children}
             </main>
+            <ChatBot />
         </div>
     );
 }
