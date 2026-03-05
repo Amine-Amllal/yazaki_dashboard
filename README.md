@@ -8,6 +8,7 @@ Built as part of an academic partnership between YMM and ENSAM Meknès, this sys
 
 ## Table of Contents
 
+- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Features](#features)
   - [Authentication & Access Control](#authentication--access-control)
@@ -27,6 +28,62 @@ Built as part of an academic partnership between YMM and ENSAM Meknès, this sys
 
 ---
 
+## Screenshots
+
+### Landing Page (Animated Hero)
+
+![Landing Page Animation](docs/screenshots/landing-hero-animation.gif)
+
+### Landing Page — Features
+
+![Features Section](docs/screenshots/landing-features.png)
+
+### Landing Page — Workflow
+
+![Workflow Section](docs/screenshots/landing-workflow.png)
+
+### Login
+
+![Login Page](docs/screenshots/login.png)
+
+### User Dashboard
+
+![User Dashboard](docs/screenshots/dashboard.png)
+
+### DFC List
+
+![DFC List](docs/screenshots/dfc-list.png)
+
+### DFC Detail
+
+![DFC Detail](docs/screenshots/dfc-detail.png)
+
+### New DFC Form
+
+![New DFC](docs/screenshots/dfc-new.png)
+
+### Admin Dashboard
+
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+
+### Admin — User Management
+
+![Admin Users](docs/screenshots/admin-users.png)
+
+### Admin — Reference Data
+
+![Admin Settings](docs/screenshots/admin-settings.png)
+
+### Admin — Global History
+
+![Admin History](docs/screenshots/admin-history.png)
+
+### User Profile
+
+![User Profile](docs/screenshots/profile.png)
+
+---
+
 ## Tech Stack
 
 This project uses a **unified full-stack TypeScript** architecture — there is no separate backend server. Everything runs inside Next.js.
@@ -38,8 +95,9 @@ This project uses a **unified full-stack TypeScript** architecture — there is 
 | Framework     | [Next.js 16](https://nextjs.org) (App Router)       |
 | UI            | React 19 (Server + Client Components)               |
 | Charts        | [Recharts](https://recharts.org)                     |
-| Icons         | react-icons                                          |
-| Styling       | CSS Modules                                          |
+| Icons         | [lucide-react](https://lucide.dev), react-icons      |
+| Styling       | CSS Modules, [Tailwind CSS v4](https://tailwindcss.com) |
+| 3D / WebGL    | [Three.js](https://threejs.org) (GLSL shaders)      |
 | Fonts         | Geist (via `next/font`)                              |
 
 ### Backend (Next.js API Routes)
@@ -60,6 +118,21 @@ This project uses a **unified full-stack TypeScript** architecture — there is 
 
 > There is **no Express, no Fastify, no separate backend process**. All server-side logic (OCR, PDF processing, Gemini API calls, database queries) runs as Next.js API routes in the `src/app/api/` directory.
 
+### AI Service (RAG Chatbot)
+
+A standalone Python Flask microservice providing an AI chatbot powered by **Retrieval-Augmented Generation (RAG)**.
+
+| Concern           | Technology                                                        |
+| ----------------- | ----------------------------------------------------------------- |
+| Framework         | [Flask](https://flask.palletsprojects.com)                        |
+| LLM               | **Google Gemini 2.5 Flash** (via LangChain)                       |
+| Embeddings        | **Hugging Face Inference API** (`BAAI/bge-m3` model)              |
+| Vector Store      | [ChromaDB](https://www.trychroma.com)                             |
+| Orchestration     | [LangChain](https://python.langchain.com)                         |
+| Database Access   | SQLite (read-only, shared with Next.js via Prisma `dev.db`)       |
+
+The chatbot indexes all DFC records, history entries, and statistics from the SQLite database into ChromaDB, then uses RAG to answer user questions in French with precise, data-backed responses.
+
 ---
 
 ## Features
@@ -71,6 +144,8 @@ This project uses a **unified full-stack TypeScript** architecture — there is 
 - **Route protection** — NextAuth middleware redirects unauthenticated users to `/login`.
 - **Bcrypt password hashing** for secure credential storage.
 - Active/inactive user enforcement — deactivated accounts cannot log in.
+- **No self-registration** — only administrators can create user accounts.
+- Login page displays: *"Vous n'avez pas de compte ? Contactez votre administrateur : admin@yazaki.com"*
 
 ### DFC Management
 
@@ -206,6 +281,29 @@ Accessible at `/profile`. Users can:
 - Upload a profile photo (base64)
 - View their assigned function (read-only)
 
+### Landing Page
+
+Public homepage at `/` — accessible without authentication. Features:
+
+- **Animated hero section** with GLSL Hills 3D WebGL terrain background (Three.js + custom Perlin noise shaders)
+- **Scroll-reveal animations** — sections fade/slide into view using IntersectionObserver
+- **Staggered hero animations** — badge, title, paragraph, and CTA appear in cascading sequence
+- **Feature showcase** — 6 cards: DFC management, role-based access, analytics dashboard, AI chatbot, PDF/Excel import, traceability & collaboration
+- **Workflow section** — 4-step DFC lifecycle (Create → Review → Approve → Track)
+- **Statistics banner** — key metrics (100% traceability, 4x faster processing, 24/7 access, zero paper waste)
+- **Yazaki branding** — company colors (#E60012 red, #231F20 dark) throughout
+- **French language** — entire page in French
+- Single "Se connecter" CTA with admin contact message for account creation
+
+### AI Chatbot (RAG)
+
+Intelligent assistant connected to the DFC database:
+
+- Natural language queries about DFCs, history, and statistics — answered in French
+- RAG pipeline: SQLite → ChromaDB (vector indexing) → Hugging Face embeddings → Gemini LLM
+- Endpoints: `/api/chat` (POST), `/api/health` (GET), `/api/reindex` (POST)
+- Runs as a separate Flask service on port 5000
+
 ---
 
 ## Project Structure
@@ -232,8 +330,12 @@ src/
 │   │   └── reference/           # Reference data CRUD
 │   └── login/                   # Login page
 ├── components/                  # Shared UI components
+│   ├── ui/
+│   │   ├── saa-s-template.tsx   # Landing page (hero, features, workflow, stats, footer)
+│   │   └── glsl-hills.tsx       # Three.js GLSL terrain background
 │   ├── Sidebar.tsx              # Collapsible navigation sidebar
 │   ├── Header.tsx               # Page header with user badge
+│   ├── DashboardFilters.tsx     # Dashboard filter controls
 │   ├── FileImportUploader.tsx   # AI drag-and-drop uploader
 │   ├── HistoryModal.tsx         # Change history modal
 │   └── MainLayoutClient.tsx     # Layout shell
@@ -241,6 +343,11 @@ src/
 │   ├── auth.ts                  # NextAuth configuration
 │   └── prisma.ts                # Prisma client singleton
 └── middleware.ts                # Route protection middleware
+
+AI-service/
+├── rag.py                       # RAG chatbot Flask server
+├── requirements.txt             # Python dependencies
+└── chroma_db_yecms/             # ChromaDB vector store (auto-generated)
 
 prisma/
 ├── schema.prisma                # Database schema
@@ -280,6 +387,22 @@ npm run db:seed
 npm run dev
 ```
 
+### AI Service Setup
+
+```bash
+cd AI-service
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start the RAG chatbot service
+python rag.py
+```
+
+The AI service runs on [http://localhost:5000](http://localhost:5000).
+
+**Requirements:** Python 3.10+, a Hugging Face API key (free), and a Google Gemini API key.
+
 Open [http://localhost:3000](http://localhost:3000) to access the application.
 
 ### Available Scripts
@@ -305,6 +428,7 @@ DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
 GEMINI_API_KEY="your-google-gemini-api-key"
+HF_API_KEY="your-huggingface-api-key"
 ```
 
 | Variable          | Description                                                     |
@@ -312,9 +436,12 @@ GEMINI_API_KEY="your-google-gemini-api-key"
 | `DATABASE_URL`    | SQLite database file path                                       |
 | `NEXTAUTH_SECRET` | Secret key for NextAuth JWT encryption                          |
 | `NEXTAUTH_URL`    | Application base URL                                            |
-| `GEMINI_API_KEY`  | Google AI Studio API key for Gemini (used in document import)   |
+| `GEMINI_API_KEY`  | Google AI Studio API key for Gemini (document import + chatbot) |
+| `HF_API_KEY`      | Hugging Face API token for embeddings (AI chatbot service)      |
 
 > Get a free Gemini API key at [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+>
+> Get a free Hugging Face token at [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) (only "Inference" permission needed)
 
 ---
 

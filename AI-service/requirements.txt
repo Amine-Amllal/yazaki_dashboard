@@ -2,4 +2,6 @@ flask
 flask-cors
 chromadb
 google-generativeai
-ollama
+langchain-community
+langchain-google-genai
+langchain-core

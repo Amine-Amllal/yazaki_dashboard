@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
@@ -32,11 +32,14 @@ if ENV_PATH.exists():
 DB_PATH = Path(__file__).resolve().parent.parent / "prisma" / "dev.db"
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = "gemini-2.5-flash"
-OLLAMA_EMBED_MODEL = "bge-m3"
+HF_API_KEY = os.environ.get("HF_API_KEY", "")
+HF_EMBED_MODEL = "BAAI/bge-m3"
 CHROMA_DIR = str(Path(__file__).resolve().parent / "chroma_db_yecms")
 
 if not GEMINI_API_KEY:
     print("⚠️  GEMINI_API_KEY non trouvée. Vérifiez votre fichier .env")
+if not HF_API_KEY:
+    print("⚠️  HF_API_KEY non trouvée. Vérifiez votre fichier .env")
 if not DB_PATH.exists():
     print(f"⚠️  Base SQLite introuvable : {DB_PATH}")
     sys.exit(1)
@@ -313,7 +316,10 @@ def build_langchain_documents() -> list[Document]:
     ]
 
 
-embedding_function = OllamaEmbeddings(model=OLLAMA_EMBED_MODEL)
+embedding_function = HuggingFaceEndpointEmbeddings(
+    model=HF_EMBED_MODEL,
+    huggingfacehub_api_token=HF_API_KEY,
+)
 
 llm = ChatGoogleGenerativeAI(
     model=GEMINI_MODEL,
@@ -472,6 +478,8 @@ def chat():
         result = rag_query(question)
         return jsonify(result)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
