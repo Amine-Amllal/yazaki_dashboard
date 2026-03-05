@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getAdminSessionOrFail } from "@/lib/api-helpers";
 
 export async function GET(request: NextRequest) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
-
-    const user = session.user as Record<string, unknown>;
-    if (user.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    }
+    const { error } = await getAdminSessionOrFail();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get("limit") || "50")));
     const userId = searchParams.get("userId") || "";
 
     try {

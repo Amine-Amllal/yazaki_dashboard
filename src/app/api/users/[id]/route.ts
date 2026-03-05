@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { getAdminSessionOrFail, handleApiError } from "@/lib/api-helpers";
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    if ((session.user as Record<string, unknown>)?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    }
+    const { error } = await getAdminSessionOrFail();
+    if (error) return error;
 
     const { id } = await params;
 
@@ -29,8 +26,8 @@ export async function GET(
         }
 
         return NextResponse.json(user);
-    } catch {
-        return NextResponse.json({ error: "Erreur" }, { status: 500 });
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la récupération de l'utilisateur");
     }
 }
 
@@ -38,11 +35,8 @@ export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    if ((session.user as Record<string, unknown>)?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    }
+    const { error } = await getAdminSessionOrFail();
+    if (error) return error;
 
     const { id } = await params;
     const body = await request.json();
@@ -54,7 +48,7 @@ export async function PUT(
             if (body[field] !== undefined) updateData[field] = body[field];
         }
 
-        if (body.password) {
+        if (body.password && typeof body.password === "string" && body.password.length >= 6) {
             updateData.password = await bcrypt.hash(body.password, 10);
         }
 
@@ -68,8 +62,8 @@ export async function PUT(
         });
 
         return NextResponse.json(user);
-    } catch {
-        return NextResponse.json({ error: "Erreur lors de la modification" }, { status: 500 });
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la modification");
     }
 }
 
@@ -77,11 +71,8 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    if ((session.user as Record<string, unknown>)?.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    }
+    const { error } = await getAdminSessionOrFail();
+    if (error) return error;
 
     const { id } = await params;
 
@@ -91,7 +82,7 @@ export async function DELETE(
             data: { active: false },
         });
         return NextResponse.json({ message: "Utilisateur désactivé" });
-    } catch {
-        return NextResponse.json({ error: "Erreur" }, { status: 500 });
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la désactivation");
     }
 }

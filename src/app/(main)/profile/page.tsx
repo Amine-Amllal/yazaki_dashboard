@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// import { useSession } from "next-auth/react"; // Can optionally use for update()
+import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import { FiSave, FiUpload, FiUser } from "react-icons/fi";
 
+interface UserProfile {
+    id: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    fonction: string;
+    image: string | null;
+}
+
 export default function ProfilePage() {
-    const [user, setUser] = useState<any>(null);
+    const { update: updateSession } = useSession();
+    const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({
@@ -62,7 +72,9 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
-                alert("Profil mis à jour avec succès ! Veuillez vous reconnecter pour voir les changements dans l'entête.");
+                // Rafraîchir la session NextAuth pour mettre à jour le header
+                await updateSession();
+                alert("Profil mis à jour avec succès !");
                 window.location.reload();
             } else {
                 const err = await res.json();

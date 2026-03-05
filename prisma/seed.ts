@@ -48,7 +48,6 @@ async function main() {
         });
     }
 
-    // Create families
     const families = [
         "CABLAGE PORTE AR D",
         "CABLAGE PORTE AR G",
@@ -138,8 +137,10 @@ async function main() {
         ];
 
         for (let i = 0; i < sampleDFCs.length; i++) {
-            await prisma.dFC.create({
-                data: {
+            await prisma.dFC.upsert({
+                where: { numero: i + 1 },
+                update: {},
+                create: {
                     numero: i + 1,
                     projectId: project.id,
                     familyId: family.id,

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
+import { updateProfileSchema } from "@/lib/validations";
 
 export async function GET() {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -24,27 +25,30 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
     try {
         const body = await request.json();
-        const { nom, prenom, email, image } = body;
-        const userId = (session.user as any).id;
+
+        const parsed = updateProfileSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { status: 400 }
+            );
+        }
+
+        const { nom, prenom, email, image } = parsed.data;
+        const userId = session.user.id;
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: {
-                nom,
-                prenom,
-                email,
-                image, // Base64 string
-            },
+            data: { nom, prenom, email, image },
         });
 
         return NextResponse.json({ success: true, user: updatedUser });
-    } catch (error) {
-        console.error("Error updating profile:", error);
-        return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la mise à jour");
     }
 }

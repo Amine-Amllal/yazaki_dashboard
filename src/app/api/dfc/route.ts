@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
+import { createDFCSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
     const search = searchParams.get("search") || "";
     const projectId = searchParams.get("projectId") || "";
     const typeDFC = searchParams.get("typeDFC") || "";
@@ -58,64 +57,71 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const { session, error } = await getSessionOrFail();
+    if (error) return error;
 
     try {
         const body = await request.json();
-        const userId = (session.user as Record<string, unknown>).id as string;
 
-        // Auto-generate numero
-        const lastDfc = await prisma.dFC.findFirst({ orderBy: { numero: "desc" } });
-        const numero = (lastDfc?.numero || 0) + 1;
+        // Validate input
+        const parsed = createDFCSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { status: 400 }
+            );
+        }
 
-        const dfc = await prisma.dFC.create({
-            data: {
-                numero,
-                projectId: body.projectId,
-                familyId: body.familyId,
-                phaseId: body.phaseId,
-                description: body.description,
-                dateReception: new Date(body.dateReception),
-                faisabilite: body.faisabilite || "EN_COURS",
-                dateReponse: body.dateReponse ? new Date(body.dateReponse) : null,
-                typeDFC: body.typeDFC || "T1",
-                delaiReponse: body.delaiReponse ? parseInt(body.delaiReponse) : null,
-                dateReceptionDerogation: body.dateReceptionDerogation
-                    ? new Date(body.dateReceptionDerogation)
-                    : null,
-                numeroDerogation: body.numeroDerogation || null,
-                dateApplicationEstimee: body.dateApplicationEstimee
-                    ? new Date(body.dateApplicationEstimee)
-                    : null,
-                dateApplicationDerogation: body.dateApplicationDerogation
-                    ? new Date(body.dateApplicationDerogation)
-                    : null,
-                commentaire: body.commentaire || null,
-                createdById: userId,
-                histories: {
-                    create: {
-                        userId,
-                        field: "STATUS",
-                        newValue: "CREATED",
+        const data = parsed.data;
+        const userId = session.user.id;
+
+        // Use transaction to atomically get next numero and create DFC
+        const dfc = await prisma.$transaction(async (tx) => {
+            const lastDfc = await tx.dFC.findFirst({ orderBy: { numero: "desc" } });
+            const numero = (lastDfc?.numero || 0) + 1;
+
+            return tx.dFC.create({
+                data: {
+                    numero,
+                    projectId: data.projectId,
+                    familyId: data.familyId,
+                    phaseId: data.phaseId,
+                    description: data.description,
+                    dateReception: new Date(data.dateReception),
+                    faisabilite: data.faisabilite || "EN_COURS",
+                    dateReponse: data.dateReponse ? new Date(data.dateReponse) : null,
+                    typeDFC: data.typeDFC || "T1",
+                    delaiReponse: data.delaiReponse ? parseInt(String(data.delaiReponse)) : null,
+                    dateReceptionDerogation: data.dateReceptionDerogation
+                        ? new Date(data.dateReceptionDerogation)
+                        : null,
+                    numeroDerogation: data.numeroDerogation || null,
+                    dateApplicationEstimee: data.dateApplicationEstimee
+                        ? new Date(data.dateApplicationEstimee)
+                        : null,
+                    dateApplicationDerogation: data.dateApplicationDerogation
+                        ? new Date(data.dateApplicationDerogation)
+                        : null,
+                    commentaire: data.commentaire || null,
+                    createdById: userId,
+                    histories: {
+                        create: {
+                            userId,
+                            field: "STATUS",
+                            newValue: "CREATED",
+                        }
                     }
-                }
-            },
-            include: {
-                project: true,
-                family: true,
-                phase: true,
-            },
+                },
+                include: {
+                    project: true,
+                    family: true,
+                    phase: true,
+                },
+            });
         });
 
         return NextResponse.json(dfc, { status: 201 });
-    } catch (error) {
-        console.error("Error creating DFC:", error);
-        return NextResponse.json(
-            { error: "Erreur lors de la création du DFC" },
-            { status: 500 }
-        );
+    } catch (err) {
+        return handleApiError(err, "Erreur lors de la création du DFC");
     }
 }

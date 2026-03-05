@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getSessionOrFail } from "@/lib/api-helpers";
 
 export async function GET(request: NextRequest) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    }
+    const { error } = await getSessionOrFail();
+    if (error) return error;
 
     // Parse filter parameters
     const { searchParams } = new URL(request.url);
