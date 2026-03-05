@@ -105,6 +105,18 @@ export default function LoginPage() {
                     style={{
                         textAlign: "center",
                         marginTop: "20px",
+                        fontSize: "13px",
+                        color: "var(--text-muted)",
+                        lineHeight: "1.5",
+                    }}
+                >
+                    Vous n&apos;avez pas de compte ?{" "}
+                    <a href="mailto:admin@yazaki.com" style={{ color: "#E60012" }}>Contactez votre administrateur : admin@yazaki.com</a>
+                </p>
+                <p
+                    style={{
+                        textAlign: "center",
+                        marginTop: "12px",
                         fontSize: "12px",
                         color: "var(--text-muted)",
                     }}

@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
 
     // Public routes
     const publicPaths = ["/login", "/api/auth"];
-    if (publicPaths.some((p) => pathname.startsWith(p))) {
+    if (pathname === "/" || publicPaths.some((p) => pathname.startsWith(p))) {
         return NextResponse.next();
     }
 
