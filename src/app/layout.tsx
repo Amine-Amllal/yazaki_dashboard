@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
+import { FeedbackProvider } from "@/components/ui/feedback-provider";
 
 export const metadata: Metadata = {
   title: "YECMS - Yazaki Engineering Change Management",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <FeedbackProvider>{children}</FeedbackProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-import { FiPlus, FiEdit, FiUserX, FiUserCheck, FiSearch, FiKey, FiClock } from "react-icons/fi";
+import { useFeedback } from "@/components/ui/feedback-provider";
+import { FiPlus, FiEdit, FiUserX, FiUserCheck, FiSearch, FiKey, FiClock, FiUser } from "react-icons/fi";
 
 interface User {
     id: string;
@@ -14,11 +15,13 @@ interface User {
     fonction: string;
     role: string;
     active: boolean;
+    image: string | null;
     createdAt: string;
 }
 
 export default function AdminUsersPage() {
     const router = useRouter();
+    const { notify, prompt } = useFeedback();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -77,43 +80,82 @@ export default function AdminUsersPage() {
             if (editingUser) {
                 const body: Record<string, unknown> = { ...form };
                 if (!form.password) delete body.password;
-                await fetch(`/api/users/${editingUser.id}`, {
+                const res = await fetch(`/api/users/${editingUser.id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(body),
                 });
+                if (!res.ok) {
+                    const err = await res.json();
+                    notify.error(err.error || "Erreur lors de la modification de l'utilisateur");
+                    return;
+                }
+                notify.success("Utilisateur modifié avec succès");
             } else {
-                await fetch("/api/users", {
+                const res = await fetch("/api/users", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(form),
                 });
+                if (!res.ok) {
+                    const err = await res.json();
+                    notify.error(err.error || "Erreur lors de la création de l'utilisateur");
+                    return;
+                }
+                notify.success("Utilisateur créé avec succès");
             }
             setShowModal(false);
             fetchUsers();
+        } catch {
+            notify.error("Erreur de connexion");
         } finally {
             setSaving(false);
         }
     };
 
     const toggleActive = async (user: User) => {
-        await fetch(`/api/users/${user.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ active: !user.active }),
-        });
-        fetchUsers();
+        try {
+            const res = await fetch(`/api/users/${user.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ active: !user.active }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                notify.error(err.error || "Erreur lors du changement de statut");
+                return;
+            }
+            notify.success(user.active ? "Utilisateur désactivé" : "Utilisateur réactivé");
+            fetchUsers();
+        } catch {
+            notify.error("Erreur de connexion");
+        }
     };
 
     const resetPassword = async (userId: string) => {
-        const newPwd = prompt("Nouveau mot de passe :");
-        if (!newPwd) return;
-        await fetch(`/api/users/${userId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password: newPwd }),
+        const newPwd = await prompt({
+            title: "Réinitialiser le mot de passe",
+            message: "Entrez le nouveau mot de passe :",
+            placeholder: "Nouveau mot de passe",
+            confirmText: "Réinitialiser",
+            cancelText: "Annuler",
         });
-        alert("Mot de passe réinitialisé !");
+        if (!newPwd) return;
+        try {
+            const res = await fetch(`/api/users/${userId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: newPwd }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                notify.error(err.error || "Erreur lors de la réinitialisation du mot de passe");
+                return;
+            }
+            notify.success("Mot de passe réinitialisé avec succès");
+        } catch {
+            notify.error("Erreur de connexion");
+        }
     };
 
     const fonctionLabel = (f: string) =>
@@ -174,8 +216,7 @@ export default function AdminUsersPage() {
                             <thead>
                                 <tr>
                                     <th>Matricule</th>
-                                    <th>Nom</th>
-                                    <th>Prénom</th>
+                                    <th>Utilisateur</th>
                                     <th>Email</th>
                                     <th>Fonction</th>
                                     <th>Rôle</th>
@@ -187,21 +228,36 @@ export default function AdminUsersPage() {
                                 {loading ? (
                                     Array.from({ length: 3 }).map((_, i) => (
                                         <tr key={i}>
-                                            {Array.from({ length: 8 }).map((_, j) => (
+                                            {Array.from({ length: 7 }).map((_, j) => (
                                                 <td key={j}><div className="skeleton" style={{ height: 16, width: "80%" }} /></td>
                                             ))}
                                         </tr>
                                     ))
                                 ) : filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} style={{ textAlign: "center", padding: 40 }}>Aucun utilisateur trouvé</td>
+                                        <td colSpan={7} style={{ textAlign: "center", padding: 40 }}>Aucun utilisateur trouvé</td>
                                     </tr>
                                 ) : (
                                     filteredUsers.map((user) => (
                                         <tr key={user.id}>
                                             <td><strong>{user.matricule}</strong></td>
-                                            <td>{user.nom}</td>
-                                            <td>{user.prenom}</td>
+                                            <td>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                    <div style={{
+                                                        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                                                        background: user.image ? `url(${user.image}) center/cover` : "var(--primary-100)",
+                                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                                        fontSize: 16, color: "var(--primary)",
+                                                        border: "1px solid var(--border)"
+                                                    }}>
+                                                        {!user.image && <FiUser />}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: 600 }}>{user.nom}</div>
+                                                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{user.prenom}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td>{user.email}</td>
                                             <td>{fonctionLabel(user.fonction)}</td>
                                             <td>

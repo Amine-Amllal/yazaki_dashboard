@@ -45,11 +45,12 @@ export async function PUT(request: NextRequest) {
         }
 
         const { nom, prenom, email, image } = parsed.data;
+        const normalizedImage = image && image.trim() !== "" ? image : null;
         const userId = session.user.id;
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: { nom, prenom, email, image },
+            data: { nom, prenom, email, image: normalizedImage },
         });
 
         return NextResponse.json({ success: true, user: updatedUser });

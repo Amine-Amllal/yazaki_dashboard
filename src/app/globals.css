@@ -46,6 +46,7 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
+
   /* Radius */
   --radius-sm: 6px;
   --radius: 10px;
@@ -1177,6 +1178,113 @@ tr:last-child td {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* =================== APP DIALOG (feedback-provider) =================== */
+.app-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.app-dialog {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.25s ease;
+}
+
+.app-dialog-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 10px;
+}
+
+.app-dialog-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.app-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* =================== APP TOAST (feedback-provider) =================== */
+.app-toast-stack {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 360px;
+  width: calc(100vw - 48px);
+}
+
+.app-toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  animation: slideInRight 0.25s ease;
+}
+
+.app-toast-success { border-left-color: var(--success); }
+.app-toast-error   { border-left-color: var(--danger); }
+.app-toast-warning { border-left-color: var(--warning, #f59e0b); }
+.app-toast-info    { border-left-color: var(--primary); }
+
+.app-toast-icon { font-size: 18px; flex-shrink: 0; }
+.app-toast-success .app-toast-icon { color: var(--success); }
+.app-toast-error   .app-toast-icon { color: var(--danger); }
+.app-toast-warning .app-toast-icon { color: var(--warning, #f59e0b); }
+.app-toast-info    .app-toast-icon { color: var(--primary); }
+
+.app-toast-message { flex: 1; line-height: 1.4; }
+
+.app-toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.app-toast-close:hover { color: var(--text); }
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(60px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 /* =================== TOAST =================== */

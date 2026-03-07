@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
-import { FiSave, FiUpload, FiUser } from "react-icons/fi";
+import { useFeedback } from "@/components/ui/feedback-provider";
+import { FiSave, FiTrash2, FiUpload, FiUser } from "react-icons/fi";
 
 interface UserProfile {
     id: string;
@@ -16,6 +17,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
     const { update: updateSession } = useSession();
+    const { notify, confirm } = useFeedback();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -23,7 +25,7 @@ export default function ProfilePage() {
         nom: "",
         prenom: "",
         email: "",
-        image: "",
+        image: null as string | null,
     });
 
     useEffect(() => {
@@ -31,14 +33,14 @@ export default function ProfilePage() {
             .then((res) => res.json())
             .then((data) => {
                 if (data.error) {
-                    alert(data.error);
+                    notify.error(data.error);
                 } else {
                     setUser(data);
                     setFormData({
                         nom: data.nom,
                         prenom: data.prenom,
                         email: data.email,
-                        image: data.image || "",
+                        image: data.image || null,
                     });
                 }
                 setLoading(false);
@@ -52,12 +54,64 @@ export default function ProfilePage() {
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData({ ...formData, image: reader.result as string });
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const img = new Image();
+            img.onload = () => {
+                const MAX_DIM = 300;
+                let { width, height } = img;
+                if (width > height) {
+                    if (width > MAX_DIM) { height = Math.round(height * MAX_DIM / width); width = MAX_DIM; }
+                } else {
+                    if (height > MAX_DIM) { width = Math.round(width * MAX_DIM / height); height = MAX_DIM; }
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx?.drawImage(img, 0, 0, width, height);
+                const compressed = canvas.toDataURL("image/jpeg", 0.75);
+                setFormData((prev) => ({ ...prev, image: compressed }));
             };
-            reader.readAsDataURL(file);
+            img.src = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveImage = async () => {
+        const accepted = await confirm({
+            title: "Supprimer la photo",
+            message: "Voulez-vous vraiment supprimer la photo de profil ?",
+            confirmText: "Supprimer",
+            cancelText: "Annuler",
+            danger: true,
+        });
+        if (!accepted) return;
+
+        setSaving(true);
+        try {
+            const res = await fetch("/api/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...formData, image: null }),
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                notify.error(err.error || "Erreur lors de la suppression de l'image");
+                return;
+            }
+
+            setFormData((prev) => ({ ...prev, image: null }));
+            setUser((prev) => (prev ? { ...prev, image: null } : prev));
+            await updateSession();
+            notify.success("Photo supprimée avec succès");
+        } catch {
+            notify.error("Erreur de connexion");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -74,14 +128,13 @@ export default function ProfilePage() {
             if (res.ok) {
                 // Rafraîchir la session NextAuth pour mettre à jour le header
                 await updateSession();
-                alert("Profil mis à jour avec succès !");
-                window.location.reload();
+                notify.success("Profil mis à jour avec succès");
             } else {
                 const err = await res.json();
-                alert(err.error || "Erreur lors de la mise à jour");
+                notify.error(err.error || "Erreur lors de la mise à jour");
             }
         } catch {
-            alert("Erreur de connexion");
+            notify.error("Erreur de connexion");
         } finally {
             setSaving(false);
         }
@@ -108,10 +161,22 @@ export default function ProfilePage() {
                             }}>
                                 {!formData.image && <FiUser />}
                             </div>
-                            <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
-                                <FiUpload /> Changer la photo
-                                <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageChange} />
-                            </label>
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                                <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
+                                    <FiUpload /> Changer la photo
+                                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageChange} />
+                                </label>
+                                {formData.image && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-danger btn-sm"
+                                        onClick={handleRemoveImage}
+                                        disabled={saving}
+                                    >
+                                        <FiTrash2 /> Supprimer la photo
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr" }}>

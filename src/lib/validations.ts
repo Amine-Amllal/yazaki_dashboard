@@ -41,7 +41,7 @@ export const updateProfileSchema = z.object({
     nom: z.string().min(1).max(100),
     prenom: z.string().min(1).max(100),
     email: z.string().email("Email invalide"),
-    image: z.string().max(500000).optional().nullable(), // Limit base64 size ~375KB
+    image: z.string().max(2000000).optional().nullable(), // base64 limit ~1.5MB
 });
 
 // ─── Reference Validation ───

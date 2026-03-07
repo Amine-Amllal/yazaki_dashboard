@@ -120,7 +120,7 @@ const Navigation = React.memo(() => {
               alt="Yazaki"
               style={{ width: 32, height: 'auto' }}
             />
-            <span className="text-lg font-semibold text-white tracking-tight">YECMS</span>
+            <span className="text-lg font-semibold text-white tracking-tight">YAZAKI</span>
           </div>
 
           <div className="hidden md:flex items-center justify-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">

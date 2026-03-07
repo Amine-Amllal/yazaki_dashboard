@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
+import { useFeedback } from "@/components/ui/feedback-provider";
 import { FiPlus, FiFolder, FiLayers, FiGrid, FiTrash2, FiMoreVertical, FiEdit2 } from "react-icons/fi";
 
 interface RefItem {
@@ -17,6 +18,7 @@ interface RefData {
 }
 
 export default function AdminSettingsPage() {
+    const { notify, confirm, prompt } = useFeedback();
     const [data, setData] = useState<RefData>({ projects: [], families: [], phases: [] });
     const [loading, setLoading] = useState(true);
     const [newItem, setNewItem] = useState({ type: "", name: "" });
@@ -51,22 +53,29 @@ export default function AdminSettingsPage() {
 
             if (!res.ok) {
                 const err = await res.json();
-                alert(err.error || "Une erreur est survenue");
+                notify.error(err.error || "Une erreur est survenue");
                 return;
             }
 
             setNewItem({ type: "", name: "" });
+            notify.success("Elément ajouté avec succès");
             fetchData();
         } catch (error) {
             console.error(error);
-            alert("Erreur de connexion");
+            notify.error("Erreur de connexion");
         } finally {
             setSaving(false);
         }
     };
 
     const handleEdit = async (type: string, item: RefItem) => {
-        const newName = prompt("Modifier le nom :", item.name);
+        const newName = await prompt({
+            title: "Modifier le nom",
+            message: "Entrez le nouveau nom :",
+            defaultValue: item.name,
+            confirmText: "Modifier",
+            cancelText: "Annuler",
+        });
         if (!newName || newName.trim() === "" || newName === item.name) return;
 
         try {
@@ -78,17 +87,25 @@ export default function AdminSettingsPage() {
 
             if (!res.ok) {
                 const err = await res.json();
-                alert(err.error || "Erreur lors de la modification");
+                notify.error(err.error || "Erreur lors de la modification");
                 return;
             }
+            notify.success("Elément modifié avec succès");
             fetchData();
         } catch {
-            alert("Erreur de connexion");
+            notify.error("Erreur de connexion");
         }
     };
 
     const handleDelete = async (type: string, id: string) => {
-        if (!confirm("Êtes-vous sûr de vouloir supprimer cet élément ?")) return;
+        const accepted = await confirm({
+            title: "Supprimer l'élément",
+            message: "Êtes-vous sûr de vouloir supprimer cet élément ?",
+            confirmText: "Supprimer",
+            cancelText: "Annuler",
+            danger: true,
+        });
+        if (!accepted) return;
 
         try {
             const res = await fetch(`/api/reference?type=${type}&id=${id}`, {
@@ -97,12 +114,13 @@ export default function AdminSettingsPage() {
 
             if (!res.ok) {
                 const err = await res.json();
-                alert(err.error || "Erreur lors de la suppression");
+                notify.error(err.error || "Erreur lors de la suppression");
                 return;
             }
+            notify.success("Elément supprimé avec succès");
             fetchData();
         } catch {
-            alert("Erreur de connexion");
+            notify.error("Erreur de connexion");
         }
     };
 

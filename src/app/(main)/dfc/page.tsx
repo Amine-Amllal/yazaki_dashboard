@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { useFeedback } from "@/components/ui/feedback-provider";
 import { FiSearch, FiPlus, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
 
 interface DFC {
@@ -24,6 +25,7 @@ interface RefData {
 }
 
 export default function DFCListPage() {
+    const { confirm, notify } = useFeedback();
     const [dfcs, setDfcs] = useState<DFC[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
@@ -64,9 +66,27 @@ export default function DFCListPage() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Voulez-vous vraiment supprimer ce DFC ?")) return;
-        await fetch(`/api/dfc/${id}`, { method: "DELETE" });
-        fetchDFCs();
+        const accepted = await confirm({
+            title: "Supprimer le DFC",
+            message: "Voulez-vous vraiment supprimer ce DFC ?",
+            confirmText: "Supprimer",
+            cancelText: "Annuler",
+            danger: true,
+        });
+        if (!accepted) return;
+
+        try {
+            const res = await fetch(`/api/dfc/${id}`, { method: "DELETE" });
+            if (!res.ok) {
+                const err = await res.json();
+                notify.error(err.error || "Erreur lors de la suppression du DFC");
+                return;
+            }
+            notify.success("DFC supprimé avec succès");
+            fetchDFCs();
+        } catch {
+            notify.error("Erreur de connexion");
+        }
     };
 
     const faisabiliteLabel = (f: string) =>

@@ -19,6 +19,7 @@ export async function GET() {
             fonction: true,
             role: true,
             active: true,
+            image: true,
             createdAt: true,
         },
         orderBy: { createdAt: "desc" },
