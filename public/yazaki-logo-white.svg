@@ -1,6 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" fill="none">
-  <!-- Red Arrow/Geometric Shape -->
-  <polygon points="0,0 70,0 70,55 35,80 0,55" fill="#E60012"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 80" fill="none">
+  <!-- Yazaki Red Arrow Icon -->
+  <g transform="translate(0,2) scale(0.373)">
+    <path d="M372.861 30L405.361 0.5H1.86136L349.861 202L339.361 154.5L372.861 95V30Z" fill="#E8000D"/>
+  </g>
   <!-- YAZAKI Text in White -->
-  <text x="85" y="58" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="52" fill="#FFFFFF" letter-spacing="3">YAZAKI</text>
+  <text x="165" y="58" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="54" fill="#FFFFFF" letter-spacing="4">YAZAKI</text>
 </svg>

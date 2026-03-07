@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { GoogleGenAI, Type } from "@google/genai";
 import { config as dotenvConfig } from "dotenv";
 import path from "path";
+import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
 
 // Force-load .env from project root (overrides system env vars)
 dotenvConfig({ path: path.resolve(process.cwd(), '.env'), override: true });
@@ -279,6 +280,10 @@ function resolveId(items: { id: string; name: string }[], name: string | undefin
 // 6. POST HANDLER (Orchestrator)
 // ═══════════════════════════════════════════════════
 export async function POST(request: NextRequest) {
+    // Rate limit : 5 imports/min par IP (OCR CPU-intensive)
+    const rateLimitError = applyRateLimit(request, RATE_LIMIT_PRESETS.IMPORT, "import");
+    if (rateLimitError) return rateLimitError;
+
     const session = await auth();
     if (!session) {
         return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

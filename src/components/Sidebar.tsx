@@ -51,18 +51,16 @@ export default function Sidebar({ collapsed, toggle }: SidebarProps) {
         >
             <div className="sidebar-header" style={{ padding: collapsed ? "16px 8px" : "24px", justifyContent: collapsed ? "center" : "flex-start" }}>
                 {collapsed ? (
-                    <div style={{
-                        width: 40, height: 40, background: "var(--primary-light)", borderRadius: 8,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "white", fontWeight: 900, fontSize: 20
-                    }}>
-                        Y
-                    </div>
+                    <img
+                        src="/yazaki-icon.svg"
+                        alt="Yazaki"
+                        style={{ width: 34, height: 'auto' }}
+                    />
                 ) : (
                     <img
                         src="/yazaki-logo-white.svg"
                         alt="Yazaki"
-                        style={{ height: 36, width: 'auto', minWidth: 120 }}
+                        style={{ height: 32, width: 'auto', minWidth: 120 }}
                     />
                 )}
             </div>

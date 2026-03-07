@@ -115,9 +115,11 @@ const Navigation = React.memo(() => {
       <nav className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-[#E60012] to-[#b8000e] rounded-lg flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#E60012]/20">
-              Y
-            </div>
+            <img
+              src="/yazaki-icon.svg"
+              alt="Yazaki"
+              style={{ width: 32, height: 'auto' }}
+            />
             <span className="text-lg font-semibold text-white tracking-tight">YECMS</span>
           </div>
 

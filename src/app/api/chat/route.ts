@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionOrFail } from "@/lib/api-helpers";
+import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
 
 const RAG_SERVICE_URL = process.env.RAG_SERVICE_URL || "http://localhost:5000";
+const RAG_API_TOKEN = process.env.RAG_API_TOKEN || "";
+
+// Headers communs pour les appels au service RAG
+function ragHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (RAG_API_TOKEN) {
+        headers["Authorization"] = `Bearer ${RAG_API_TOKEN}`;
+    }
+    return headers;
+}
 
 export async function POST(request: NextRequest) {
+    // Rate limit : 10 requêtes/min par IP (protège le quota Gemini)
+    const rateLimitError = applyRateLimit(request, RATE_LIMIT_PRESETS.CHAT, "chat");
+    if (rateLimitError) return rateLimitError;
+
     const { error } = await getSessionOrFail();
     if (error) return error;
 
@@ -16,6 +31,7 @@ export async function POST(request: NextRequest) {
             try {
                 const healthRes = await fetch(`${RAG_SERVICE_URL}/api/health`, {
                     signal: AbortSignal.timeout(3000),
+                    headers: ragHeaders(),
                 });
                 if (healthRes.ok) {
                     return NextResponse.json({ status: "ok" });
@@ -32,7 +48,7 @@ export async function POST(request: NextRequest) {
 
         const ragRes = await fetch(`${RAG_SERVICE_URL}/api/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: ragHeaders(),
             body: JSON.stringify({ question: question.trim() }),
             signal: AbortSignal.timeout(60000), // 60s timeout pour les requêtes RAG
         });

@@ -43,7 +43,7 @@ export default function LoginPage() {
                     <img
                         src="/yazaki-logo.svg"
                         alt="Yazaki"
-                        style={{ height: 48, width: 'auto', marginBottom: 8 }}
+                        style={{ height: 38, width: 'auto', marginBottom: 8 }}
                     />
                     <div className="login-logo-text" style={{ textAlign: 'center' }}>
                         <h2>YECMS</h2>

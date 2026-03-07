@@ -50,6 +50,11 @@ export async function PUT(
                 throw new Error("DFC_NOT_FOUND");
             }
 
+            // Authorization: only the creator or an ADMIN can modify
+            if (currentDfc.createdById !== userId && session.user.role !== "ADMIN") {
+                throw new Error("FORBIDDEN");
+            }
+
             // Track changes — proper null-safe comparison
             const fieldsToTrack = [
                 "description", "faisabilite", "typeDFC", "commentaire",
@@ -121,6 +126,9 @@ export async function PUT(
         if (err instanceof Error && err.message === "DFC_NOT_FOUND") {
             return NextResponse.json({ error: "DFC non trouvé" }, { status: 404 });
         }
+        if (err instanceof Error && err.message === "FORBIDDEN") {
+            return NextResponse.json({ error: "Vous n'êtes pas autorisé à modifier ce DFC" }, { status: 403 });
+        }
         return handleApiError(err, "Erreur lors de la modification du DFC");
     }
 }
@@ -135,6 +143,15 @@ export async function DELETE(
     const { id } = await params;
 
     try {
+        // Check authorization: only the creator or an ADMIN can delete
+        const dfc = await prisma.dFC.findUnique({ where: { id }, select: { createdById: true } });
+        if (!dfc) {
+            return NextResponse.json({ error: "DFC non trouvé" }, { status: 404 });
+        }
+        if (dfc.createdById !== session.user.id && session.user.role !== "ADMIN") {
+            return NextResponse.json({ error: "Vous n'êtes pas autorisé à supprimer ce DFC" }, { status: 403 });
+        }
+
         await prisma.dFC.delete({ where: { id } });
         return NextResponse.json({ message: "DFC supprimé" });
     } catch (err) {

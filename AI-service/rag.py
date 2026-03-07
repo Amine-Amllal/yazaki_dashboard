@@ -438,7 +438,28 @@ def reindex() -> int:
 #  FLASK APP
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=[
+    "http://localhost:3000",
+    os.environ.get("ALLOWED_ORIGIN", "http://localhost:3000"),
+])
+
+# Token d'authentification partagé entre Next.js et le service RAG
+RAG_API_TOKEN = os.environ.get("RAG_API_TOKEN", "")
+
+
+def require_auth(f):
+    """Décorateur pour protéger les endpoints avec un token Bearer."""
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not RAG_API_TOKEN:
+            # Si aucun token configuré, on laisse passer (dev uniquement)
+            return f(*args, **kwargs)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer ") or auth_header[7:] != RAG_API_TOKEN:
+            return jsonify({"error": "Non autorisé"}), 401
+        return f(*args, **kwargs)
+    return decorated
 
 
 @app.route("/api/health", methods=["GET"])
@@ -447,8 +468,9 @@ def health():
 
 
 @app.route("/api/data", methods=["GET"])
+@require_auth
 def get_data():
-    """Endpoint de test : retourne toutes les données brutes de la BD."""
+    """Retourne les données brutes de la BD (protégé par token)."""
     return jsonify({
         "projects": fetch_all_projects(),
         "families": fetch_all_families(),
@@ -461,15 +483,17 @@ def get_data():
 
 
 @app.route("/api/documents", methods=["GET"])
+@require_auth
 def get_documents():
-    """Endpoint de test : retourne tous les documents formatés pour le RAG."""
+    """Retourne tous les documents formatés pour le RAG (protégé par token)."""
     docs = build_all_documents()
     return jsonify({"count": len(docs), "documents": docs})
 
 
 @app.route("/api/chat", methods=["POST"])
+@require_auth
 def chat():
-    """Endpoint principal RAG."""
+    """Endpoint principal RAG (protégé par token)."""
     data = request.get_json()
     question = data.get("question", "")
     if not question:
@@ -484,8 +508,9 @@ def chat():
 
 
 @app.route("/api/reindex", methods=["POST"])
+@require_auth
 def do_reindex():
-    """Réindexer les données SQLite dans ChromaDB."""
+    """Réindexer les données SQLite dans ChromaDB (protégé par token)."""
     try:
         count = reindex()
         return jsonify({"status": "ok", "indexed": count})
@@ -506,4 +531,4 @@ if __name__ == "__main__":
     print("-" * 40)
 
     print("\n Démarrage du serveur Flask sur http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)

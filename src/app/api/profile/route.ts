@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
 import { updateProfileSchema } from "@/lib/validations";
+import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
 
 export async function GET() {
     const { session, error } = await getSessionOrFail();
@@ -25,6 +26,10 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+    // Rate limit : 10 modifications profil/min par IP
+    const rateLimitError = applyRateLimit(request, RATE_LIMIT_PRESETS.PROFILE, "profile");
+    if (rateLimitError) return rateLimitError;
+
     const { session, error } = await getSessionOrFail();
     if (error) return error;
 

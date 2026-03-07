@@ -306,6 +306,87 @@ Intelligent assistant connected to the DFC database:
 
 ---
 
+## Modifications & Améliorations de Sécurité
+
+Cette section documente les améliorations de sécurité et de qualité apportées au projet avant la livraison à Yazaki.
+
+### 1. Correction du Middleware Next.js
+
+**Fichier :** `src/middleware.ts` (anciennement `src/proxy.ts`)
+
+- **Problème :** Le fichier s'appelait `proxy.ts` avec une fonction `proxy()`. Next.js exige le nom `middleware.ts` avec une fonction exportée `middleware()` pour que la protection des routes fonctionne.
+- **Correction :** Renommage du fichier et de la fonction. Le middleware vérifie la présence du cookie de session (`authjs.session-token` ou `__Secure-authjs.session-token`) et redirige les utilisateurs non authentifiés vers `/login`.
+
+### 2. Autorisation sur les Routes DFC (PUT / DELETE)
+
+**Fichier :** `src/app/api/dfc/[id]/route.ts`
+
+- **Problème :** N'importe quel utilisateur authentifié pouvait modifier ou supprimer le DFC d'un autre utilisateur.
+- **Correction :** Ajout de vérifications d'autorisation — seul le **créateur du DFC** ou un **administrateur** peut modifier (PUT) ou supprimer (DELETE) un DFC. Retourne une erreur `403 Forbidden` sinon.
+
+```typescript
+if (currentDfc.createdById !== userId && session.user.role !== "ADMIN") {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+```
+
+### 3. Sécurisation du Service RAG (Flask)
+
+**Fichier :** `AI-service/rag.py`
+
+- **Problèmes corrigés :**
+  - `debug=True` en production → changé à `debug=False`
+  - Aucune authentification sur les endpoints sensibles
+  - CORS trop permissif
+- **Corrections :**
+  - Ajout d'un décorateur `@require_auth` sur tous les endpoints sensibles (`/api/data`, `/api/documents`, `/api/chat`, `/api/reindex`)
+  - Authentification par **Bearer Token** (`Authorization: Bearer <RAG_API_TOKEN>`)
+  - Variable d'environnement `RAG_API_TOKEN` ajoutée au `.env`
+  - CORS configuré avec `ALLOWED_ORIGIN` (par défaut `http://localhost:3000`)
+  - Le proxy Next.js (`src/app/api/chat/route.ts`) envoie automatiquement le token dans les headers
+
+### 4. Rate Limiting Professionnel
+
+**Fichier créé :** `src/lib/rate-limit.ts`
+
+Implémentation d'un **algorithme de fenêtre glissante (sliding window)** pour protéger contre les abus et attaques par force brute.
+
+**Presets configurés :**
+
+| Preset        | Limite       | Routes protégées                        |
+| ------------- | ------------ | --------------------------------------- |
+| AUTH          | 5 req/min    | `POST /api/auth/[...nextauth]`          |
+| CHAT          | 10 req/min   | `POST /api/chat`                        |
+| IMPORT        | 5 req/min    | `POST /api/dfc/import`                  |
+| CREATE        | 20 req/min   | `POST /api/dfc`                         |
+| USER_CREATE   | 10 req/min   | `POST /api/users`                       |
+| PROFILE       | 10 req/min   | `PUT /api/profile`                      |
+
+**Caractéristiques :**
+
+- Identification du client via `X-Forwarded-For` → `X-Real-IP` → fallback `anonymous`
+- Headers HTTP standards : `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+- Nettoyage automatique du cache toutes les 5 minutes
+- Cache global persistant entre les rechargements du serveur de développement
+
+### 5. Remplacement des Logos
+
+**Fichiers modifiés / créés :**
+
+| Fichier                        | Description                                              |
+| ------------------------------ | -------------------------------------------------------- |
+| `public/yazaki-logo.svg`       | Logo officiel Yazaki (texte foncé) — pour la page login  |
+| `public/yazaki-logo-white.svg` | Logo officiel Yazaki (texte blanc) — pour la sidebar     |
+| `public/yazaki-icon.svg`       | **Nouveau** — Icône seule (flèche rouge) pour sidebar réduite et navigation |
+
+**Composants mis à jour :**
+
+- `src/components/Sidebar.tsx` — icône SVG remplace le placeholder "Y", taille réduite (32px)
+- `src/app/login/page.tsx` — hauteur du logo réduite (38px)
+- `src/components/ui/saa-s-template.tsx` — icône SVG dans la barre de navigation
+
+---
+
 ## Project Structure
 
 ```
@@ -341,7 +422,10 @@ src/
 │   └── MainLayoutClient.tsx     # Layout shell
 ├── lib/
 │   ├── auth.ts                  # NextAuth configuration
-│   └── prisma.ts                # Prisma client singleton
+│   ├── prisma.ts                # Prisma client singleton
+│   ├── rate-limit.ts            # Rate limiting (sliding window algorithm)
+│   ├── api-helpers.ts           # API utility helpers
+│   └── validations.ts           # Zod validation schemas
 └── middleware.ts                # Route protection middleware
 
 AI-service/
@@ -429,6 +513,7 @@ NEXTAUTH_SECRET="your-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
 GEMINI_API_KEY="your-google-gemini-api-key"
 HF_API_KEY="your-huggingface-api-key"
+RAG_API_TOKEN="your-rag-api-token"
 ```
 
 | Variable          | Description                                                     |
@@ -438,6 +523,7 @@ HF_API_KEY="your-huggingface-api-key"
 | `NEXTAUTH_URL`    | Application base URL                                            |
 | `GEMINI_API_KEY`  | Google AI Studio API key for Gemini (document import + chatbot) |
 | `HF_API_KEY`      | Hugging Face API token for embeddings (AI chatbot service)      |
+| `RAG_API_TOKEN`   | Token d'authentification pour le service RAG Flask (Bearer)     |
 
 > Get a free Gemini API key at [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 >

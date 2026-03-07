@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
 import { createDFCSchema } from "@/lib/validations";
+import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
     const { session, error } = await getSessionOrFail();
@@ -57,6 +58,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    // Rate limit : 20 créations DFC/min par IP
+    const rateLimitError = applyRateLimit(request, RATE_LIMIT_PRESETS.CREATE, "dfc-create");
+    if (rateLimitError) return rateLimitError;
+
     const { session, error } = await getSessionOrFail();
     if (error) return error;
 

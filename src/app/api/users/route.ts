@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { getAdminSessionOrFail, handleApiError } from "@/lib/api-helpers";
 import { createUserSchema } from "@/lib/validations";
+import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
 
 export async function GET() {
     const { error } = await getAdminSessionOrFail();
@@ -27,6 +28,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    // Rate limit : 10 créations utilisateur/min par IP
+    const rateLimitError = applyRateLimit(request, RATE_LIMIT_PRESETS.USER_CREATE, "user-create");
+    if (rateLimitError) return rateLimitError;
+
     const { error } = await getAdminSessionOrFail();
     if (error) return error;
 
