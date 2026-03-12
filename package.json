@@ -10,7 +10,7 @@
     "db:push": "npx prisma db push",
     "db:seed": "npx prisma db seed",
     "db:studio": "npx prisma studio",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate && node -e \"const z=require('zlib'),f=require('fs'),p='node_modules/mupdf/dist/mupdf-wasm.wasm';if(!f.existsSync(p)){const d=z.brotliDecompressSync(f.readFileSync(p+'.br'));f.writeFileSync(p,d);console.log('Decompressed mupdf wasm:',d.length,'bytes')}\""
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
