@@ -516,7 +516,10 @@ def do_reindex():
         return jsonify({"status": "ok", "indexed": count})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
+RAG_HOST = os.environ.get("RAG_HOST")
+RAG_PORT = int(os.environ.get("RAG_PORT"))
 
 if __name__ == "__main__":
     print("=" * 50)
@@ -531,4 +534,5 @@ if __name__ == "__main__":
     print("-" * 40)
 
     print("\n Démarrage du serveur Flask sur http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host=RAG_HOST, port=RAG_PORT, debug=False)
+
