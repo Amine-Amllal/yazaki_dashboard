@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("Error fetching history:", error);
         return NextResponse.json(
-            { error: "Erreur lors de la récupération de l'historique" },
+            { error: "Failed to fetch history" },
             { status: 500 }
         );
     }

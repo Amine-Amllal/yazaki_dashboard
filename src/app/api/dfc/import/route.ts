@@ -29,7 +29,7 @@ async function extractFromExcel(file: File): Promise<string> {
 
     const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
     if (rows.length === 0) {
-        throw new Error("Le fichier Excel/CSV est vide.");
+        throw new Error("The Excel/CSV file is empty.");
     }
 
     const headers = Object.keys(rows[0]);
@@ -175,7 +175,7 @@ async function callGemini(
 ): Promise<GeminiDFCResult> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        throw new Error("GEMINI_API_KEY manquante. Ajoutez-la dans le fichier .env.");
+        throw new Error("GEMINI_API_KEY is missing. Add it to the .env file.");
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -225,7 +225,7 @@ Règles d'extraction :
 
         const responseText = response.text;
         if (!responseText) {
-            throw new Error("Réponse vide du modèle Gemini.");
+            throw new Error("Gemini returned an empty response.");
         }
 
         console.log(`[DFC Import] Gemini response received (${responseText.length} chars)`);
@@ -242,16 +242,16 @@ Règles d'extraction :
 
         // Handle specific error cases
         if (err.name === "AbortError") {
-            throw new Error("Timeout : le modèle Gemini n'a pas répondu dans les 60 secondes.");
+            throw new Error("Timeout: Gemini did not respond within 60 seconds.");
         }
         if (err.message?.includes("API_KEY_INVALID")) {
-            throw new Error("Clé API Gemini invalide. Vérifiez GEMINI_API_KEY dans le fichier .env.");
+            throw new Error("Invalid Gemini API key. Check GEMINI_API_KEY in your .env file.");
         }
         if (err.message?.includes("RESOURCE_EXHAUSTED") || err.status === 429) {
-            throw new Error("Quota Gemini épuisé (free tier). Réessayez dans quelques minutes.");
+            throw new Error("Gemini quota exhausted (free tier). Please try again in a few minutes.");
         }
         if (err.message?.includes("not found") || err.message?.includes("NOT_FOUND")) {
-            throw new Error("Modèle Gemini non disponible. Vérifiez que gemini-2.5-flash est accessible avec votre clé API.");
+            throw new Error("Gemini model unavailable. Verify that gemini-2.5-flash is accessible with your API key.");
         }
 
         throw error; // Re-throw unexpected errors
@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
 
     const session = await auth();
     if (!session) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
         const file = formData.get("file") as File | null;
 
         if (!file) {
-            return NextResponse.json({ error: "Aucun fichier fourni." }, { status: 400 });
+            return NextResponse.json({ error: "No file provided." }, { status: 400 });
         }
 
         const fileName = file.name.toLowerCase();
@@ -311,14 +311,14 @@ export async function POST(request: NextRequest) {
             extractedText = await extractFromPDF(buffer);
         } else {
             return NextResponse.json(
-                { error: "Format non supporté. Utilisez PDF, XLSX ou CSV." },
+                { error: "Unsupported format. Use PDF, XLSX, or CSV." },
                 { status: 400 }
             );
         }
 
         if (!extractedText || extractedText.trim().length < 5) {
             return NextResponse.json(
-                { error: "Impossible d'extraire du texte exploitable du fichier." },
+                { error: "Could not extract usable text from the file." },
                 { status: 400 }
             );
         }
@@ -371,7 +371,7 @@ export async function POST(request: NextRequest) {
         console.error("[DFC Import] ❌ Error:", err.message);
 
         return NextResponse.json(
-            { error: err.message || "Erreur lors du traitement du fichier." },
+            { error: err.message || "Failed to process file." },
             { status: 500 }
         );
     }

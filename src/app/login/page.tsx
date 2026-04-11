@@ -24,13 +24,13 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                setError("Email/Matricule ou mot de passe incorrect");
+                setError("Incorrect email/employee ID or password");
             } else {
                 router.push("/dashboard");
                 router.refresh();
             }
         } catch {
-            setError("Erreur de connexion. Veuillez réessayer.");
+            setError("Login failed. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -51,14 +51,14 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <h1>Connexion</h1>
+                <h1>Login</h1>
 
                 {error && <div className="login-error">{error}</div>}
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label className="form-label" htmlFor="email">
-                            Email ou Matricule
+                            Email or Employee ID
                         </label>
                         <input
                             id="email"
@@ -73,7 +73,7 @@ export default function LoginPage() {
 
                     <div className="form-group">
                         <label className="form-label" htmlFor="password">
-                            Mot de passe
+                            Password
                         </label>
                         <input
                             id="password"
@@ -93,10 +93,10 @@ export default function LoginPage() {
                     >
                         {loading ? (
                             <>
-                                <span className="loading-spinner" /> Connexion...
+                                <span className="loading-spinner" /> Signing in...
                             </>
                         ) : (
-                            "Se connecter"
+                            "Sign in"
                         )}
                     </button>
                 </form>
@@ -110,8 +110,8 @@ export default function LoginPage() {
                         lineHeight: "1.5",
                     }}
                 >
-                    Vous n&apos;avez pas de compte ?{" "}
-                    <a href="mailto:admin@yazaki.com" style={{ color: "#E60012" }}>Contactez votre administrateur : admin@yazaki.com</a>
+                    Don&apos;t have an account?{" "}
+                    <a href="mailto:admin@yazaki.com" style={{ color: "#E60012" }}>Contact your administrator: admin@yazaki.com</a>
                 </p>
                 <p
                     style={{

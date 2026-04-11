@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get("projectId");
     const familyId = searchParams.get("familyId");
     const typeDFC = searchParams.get("typeDFC");
-    const statut = searchParams.get("statut"); // ouvert | ferme
+    const statut = searchParams.get("statut"); // open | closed
     const responsableId = searchParams.get("responsableId");
     const faisabilite = searchParams.get("faisabilite"); // OUI | NON | EN_COURS | A_CLARIFIER
 
@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
     if (projectId) where.projectId = projectId;
     if (familyId) where.familyId = familyId;
     if (typeDFC) where.typeDFC = typeDFC;
-    if (statut === "ouvert") where.dateReponse = null;
-    if (statut === "ferme") where.dateReponse = { not: null };
+    if (statut === "open") where.dateReponse = null;
+    if (statut === "closed") where.dateReponse = { not: null };
     if (responsableId) where.createdById = responsableId;
     if (faisabilite) where.faisabilite = faisabilite;
 
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
 
     const dfcByProjectNamed = dfcByProject.map((item) => ({
-        name: projectMap[item.projectId] || "Inconnu",
+        name: projectMap[item.projectId] || "Unknown",
         count: item._count.id,
     }));
 
@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
     }));
 
     const dfcByFaisabiliteNamed = dfcByFaisabilite.map((item) => ({
-        name: item.faisabilite === "OUI" ? "Oui"
-            : item.faisabilite === "NON" ? "Non"
-                : item.faisabilite === "EN_COURS" ? "En cours"
-                    : "À clarifier",
+        name: item.faisabilite === "OUI" ? "Yes"
+            : item.faisabilite === "NON" ? "No"
+                : item.faisabilite === "EN_COURS" ? "In progress"
+                    : "Needs clarification",
         count: item._count.id,
     }));
 
@@ -109,15 +109,15 @@ export async function GET(request: NextRequest) {
         select: { dateReception: true, dateReponse: true },
     });
 
-    const monthlyTrend: Record<string, { reçus: number; répondus: number }> = {};
-    const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+    const monthlyTrend: Record<string, { received: number; answered: number }> = {};
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     monthlyDFCs.forEach((dfc) => {
         const date = new Date(dfc.dateReception);
         const key = `${months[date.getMonth()]} ${date.getFullYear()}`;
-        if (!monthlyTrend[key]) monthlyTrend[key] = { reçus: 0, répondus: 0 };
-        monthlyTrend[key].reçus++;
-        if (dfc.dateReponse) monthlyTrend[key].répondus++;
+        if (!monthlyTrend[key]) monthlyTrend[key] = { received: 0, answered: 0 };
+        monthlyTrend[key].received++;
+        if (dfc.dateReponse) monthlyTrend[key].answered++;
     });
 
     const monthlyData = Object.entries(monthlyTrend).map(([month, data]) => ({

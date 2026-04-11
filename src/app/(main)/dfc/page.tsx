@@ -5,6 +5,8 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useFeedback } from "@/components/ui/feedback-provider";
 import { FiSearch, FiPlus, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
+import { formatDate } from "@/lib/i18n/format";
+import { faisabilityLabels, statusLabels } from "@/lib/i18n/messages";
 
 interface DFC {
     id: string;
@@ -67,10 +69,10 @@ export default function DFCListPage() {
 
     const handleDelete = async (id: string) => {
         const accepted = await confirm({
-            title: "Supprimer le DFC",
-            message: "Voulez-vous vraiment supprimer ce DFC ?",
-            confirmText: "Supprimer",
-            cancelText: "Annuler",
+            title: "Delete DFC",
+            message: "Do you really want to delete this DFC?",
+            confirmText: "Delete",
+            cancelText: "Cancel",
             danger: true,
         });
         if (!accepted) return;
@@ -79,18 +81,17 @@ export default function DFCListPage() {
             const res = await fetch(`/api/dfc/${id}`, { method: "DELETE" });
             if (!res.ok) {
                 const err = await res.json();
-                notify.error(err.error || "Erreur lors de la suppression du DFC");
+                notify.error(err.error || "Failed to delete DFC");
                 return;
             }
-            notify.success("DFC supprimé avec succès");
+            notify.success("DFC deleted successfully");
             fetchDFCs();
         } catch {
-            notify.error("Erreur de connexion");
+            notify.error("Connection error");
         }
     };
 
-    const faisabiliteLabel = (f: string) =>
-        f === "OUI" ? "Oui" : f === "NON" ? "Non" : f === "EN_COURS" ? "En cours" : "À clarifier";
+    const faisabiliteLabel = (f: string) => faisabilityLabels[f] || f;
 
     const faisabiliteBadge = (f: string) =>
         f === "OUI" ? "badge-success" :
@@ -99,7 +100,7 @@ export default function DFCListPage() {
 
     return (
         <>
-            <Header title="Liste des DFC" subtitle={`${total} DFC au total`} />
+            <Header title="DFC List" subtitle={`${total} DFC total`} />
             <div className="page-content animate-in">
                 {/* Filters */}
                 <div className="filters-bar">
@@ -107,36 +108,36 @@ export default function DFCListPage() {
                         <FiSearch />
                         <input
                             type="text"
-                            placeholder="Rechercher par description, numéro..."
+                            placeholder="Search by description, number..."
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                         />
                     </div>
                     <select className="filter-select" value={projectFilter} onChange={(e) => { setProjectFilter(e.target.value); setPage(1); }}>
-                        <option value="">Tous les projets</option>
+                        <option value="">All projects</option>
                         {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                     <select className="filter-select" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
-                        <option value="">Tous les types</option>
+                        <option value="">All types</option>
                         <option value="T1">T1</option>
                         <option value="T2">T2</option>
                         <option value="T3">T3</option>
                         <option value="MISTAKED">Mistaked</option>
                     </select>
                     <select className="filter-select" value={faisabiliteFilter} onChange={(e) => { setFaisabiliteFilter(e.target.value); setPage(1); }}>
-                        <option value="">Toute faisabilité</option>
-                        <option value="OUI">Oui</option>
-                        <option value="NON">Non</option>
-                        <option value="EN_COURS">En cours</option>
-                        <option value="A_CLARIFIER">À clarifier</option>
+                        <option value="">All feasibility</option>
+                        <option value="OUI">Yes</option>
+                        <option value="NON">No</option>
+                        <option value="EN_COURS">In progress</option>
+                        <option value="A_CLARIFIER">Needs clarification</option>
                     </select>
                     <select className="filter-select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-                        <option value="">Tous les statuts</option>
-                        <option value="open">Ouvert</option>
-                        <option value="closed">Fermé</option>
+                        <option value="">All statuses</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
                     </select>
                     <Link href="/dfc/new" className="btn btn-primary">
-                        <FiPlus /> Nouveau DFC
+                        <FiPlus /> New DFC
                     </Link>
                 </div>
 
@@ -148,12 +149,12 @@ export default function DFCListPage() {
                                 <tr>
                                     <th>N°</th>
                                     <th>Description</th>
-                                    <th>Projet</th>
-                                    <th>Famille</th>
+                                    <th>Project</th>
+                                    <th>Family</th>
                                     <th>Type</th>
-                                    <th>Faisabilité</th>
-                                    <th>Date réception</th>
-                                    <th>Statut</th>
+                                    <th>Feasibility</th>
+                                    <th>Received date</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -169,7 +170,7 @@ export default function DFCListPage() {
                                 ) : dfcs.length === 0 ? (
                                     <tr>
                                         <td colSpan={9} style={{ textAlign: "center", padding: 40 }}>
-                                            Aucun DFC trouvé
+                                            No DFC found
                                         </td>
                                     </tr>
                                 ) : (
@@ -189,21 +190,21 @@ export default function DFCListPage() {
                                                     {faisabiliteLabel(dfc.faisabilite)}
                                                 </span>
                                             </td>
-                                            <td>{new Date(dfc.dateReception).toLocaleDateString("fr-FR")}</td>
+                                            <td>{formatDate(dfc.dateReception)}</td>
                                             <td>
                                                 <span className={`badge ${dfc.dateReponse ? "badge-success" : "badge-warning"}`}>
-                                                    {dfc.dateReponse ? "Fermé" : "Ouvert"}
+                                                    {dfc.dateReponse ? statusLabels.closed : statusLabels.open}
                                                 </span>
                                             </td>
                                             <td>
                                                 <div style={{ display: "flex", gap: 4 }}>
-                                                    <Link href={`/dfc/${dfc.id}`} className="btn btn-secondary btn-sm btn-icon" title="Voir">
+                                                    <Link href={`/dfc/${dfc.id}`} className="btn btn-secondary btn-sm btn-icon" title="View">
                                                         <FiEye />
                                                     </Link>
-                                                    <Link href={`/dfc/${dfc.id}?edit=true`} className="btn btn-secondary btn-sm btn-icon" title="Modifier">
+                                                    <Link href={`/dfc/${dfc.id}?edit=true`} className="btn btn-secondary btn-sm btn-icon" title="Edit">
                                                         <FiEdit />
                                                     </Link>
-                                                    <button onClick={() => handleDelete(dfc.id)} className="btn btn-secondary btn-sm btn-icon" title="Supprimer">
+                                                    <button onClick={() => handleDelete(dfc.id)} className="btn btn-secondary btn-sm btn-icon" title="Delete">
                                                         <FiTrash2 />
                                                     </button>
                                                 </div>

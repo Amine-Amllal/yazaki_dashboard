@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         const parsed = createUserSchema.safeParse(body);
         if (!parsed.success) {
             return NextResponse.json(
-                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { error: "Invalid data", details: parsed.error.flatten().fieldErrors },
                 { status: 400 }
             );
         }
@@ -74,6 +74,6 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(user, { status: 201 });
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la création de l'utilisateur");
+        return handleApiError(err, "Failed to create user");
     }
 }

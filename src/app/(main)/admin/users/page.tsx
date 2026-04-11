@@ -87,10 +87,10 @@ export default function AdminUsersPage() {
                 });
                 if (!res.ok) {
                     const err = await res.json();
-                    notify.error(err.error || "Erreur lors de la modification de l'utilisateur");
+                    notify.error(err.error || "Failed to update user");
                     return;
                 }
-                notify.success("Utilisateur modifié avec succès");
+                notify.success("User updated successfully");
             } else {
                 const res = await fetch("/api/users", {
                     method: "POST",
@@ -99,15 +99,15 @@ export default function AdminUsersPage() {
                 });
                 if (!res.ok) {
                     const err = await res.json();
-                    notify.error(err.error || "Erreur lors de la création de l'utilisateur");
+                    notify.error(err.error || "Failed to create user");
                     return;
                 }
-                notify.success("Utilisateur créé avec succès");
+                notify.success("User created successfully");
             }
             setShowModal(false);
             fetchUsers();
         } catch {
-            notify.error("Erreur de connexion");
+            notify.error("Connection error");
         } finally {
             setSaving(false);
         }
@@ -122,23 +122,23 @@ export default function AdminUsersPage() {
             });
             if (!res.ok) {
                 const err = await res.json();
-                notify.error(err.error || "Erreur lors du changement de statut");
+                notify.error(err.error || "Failed to change status");
                 return;
             }
-            notify.success(user.active ? "Utilisateur désactivé" : "Utilisateur réactivé");
+            notify.success(user.active ? "User deactivated" : "User reactivated");
             fetchUsers();
         } catch {
-            notify.error("Erreur de connexion");
+            notify.error("Connection error");
         }
     };
 
     const resetPassword = async (userId: string) => {
         const newPwd = await prompt({
-            title: "Réinitialiser le mot de passe",
-            message: "Entrez le nouveau mot de passe :",
-            placeholder: "Nouveau mot de passe",
-            confirmText: "Réinitialiser",
-            cancelText: "Annuler",
+            title: "Reset password",
+            message: "Enter the new password:",
+            placeholder: "New password",
+            confirmText: "Reset",
+            cancelText: "Cancel",
         });
         if (!newPwd) return;
         try {
@@ -149,12 +149,12 @@ export default function AdminUsersPage() {
             });
             if (!res.ok) {
                 const err = await res.json();
-                notify.error(err.error || "Erreur lors de la réinitialisation du mot de passe");
+                notify.error(err.error || "Failed to reset password");
                 return;
             }
-            notify.success("Mot de passe réinitialisé avec succès");
+            notify.success("Password reset successfully");
         } catch {
-            notify.error("Erreur de connexion");
+            notify.error("Connection error");
         }
     };
 
@@ -177,36 +177,36 @@ export default function AdminUsersPage() {
 
     return (
         <>
-            <Header title="Gestion des utilisateurs" subtitle={`${users.length} utilisateurs`} />
+            <Header title="User management" subtitle={`${users.length} users`} />
             <div className="page-content animate-in">
                 <div className="filters-bar">
                     <div className="search-input">
                         <FiSearch />
                         <input
                             type="text"
-                            placeholder="Rechercher par nom, matricule, email..."
+                            placeholder="Search by name, employee ID, email..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                     <select className="filter-select" value={fonctionFilter} onChange={(e) => setFonctionFilter(e.target.value)}>
-                        <option value="">Toutes les fonctions</option>
+                        <option value="">All functions</option>
                         <option value="PP_RESPONSIBLE">PP Responsible</option>
                         <option value="PP_TECHNICIAN">PP Technician</option>
                         <option value="PP_COORDINATOR">PP Coordinator</option>
                     </select>
                     <select className="filter-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                        <option value="">Tous les rôles</option>
-                        <option value="USER">Utilisateur</option>
-                        <option value="ADMIN">Administrateur</option>
+                        <option value="">All roles</option>
+                        <option value="USER">User</option>
+                        <option value="ADMIN">Administrator</option>
                     </select>
                     <select className="filter-select" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
-                        <option value="">Tous les statuts</option>
-                        <option value="active">Actif</option>
-                        <option value="inactive">Inactif</option>
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
                     </select>
                     <button className="btn btn-primary" onClick={openCreate}>
-                        <FiPlus /> Nouvel utilisateur
+                        <FiPlus /> New user
                     </button>
                 </div>
 
@@ -215,12 +215,12 @@ export default function AdminUsersPage() {
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Matricule</th>
-                                    <th>Utilisateur</th>
+                                    <th>Employee ID</th>
+                                    <th>User</th>
                                     <th>Email</th>
-                                    <th>Fonction</th>
-                                    <th>Rôle</th>
-                                    <th>Statut</th>
+                                    <th>Function</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -235,7 +235,7 @@ export default function AdminUsersPage() {
                                     ))
                                 ) : filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} style={{ textAlign: "center", padding: 40 }}>Aucun utilisateur trouvé</td>
+                                        <td colSpan={7} style={{ textAlign: "center", padding: 40 }}>No user found</td>
                                     </tr>
                                 ) : (
                                     filteredUsers.map((user) => (
@@ -267,21 +267,21 @@ export default function AdminUsersPage() {
                                             </td>
                                             <td>
                                                 <span className={`badge ${user.active ? "badge-success" : "badge-danger"}`}>
-                                                    {user.active ? "Actif" : "Inactif"}
+                                                    {user.active ? "Active" : "Inactive"}
                                                 </span>
                                             </td>
                                             <td>
                                                 <div style={{ display: "flex", gap: 4 }}>
-                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Modifier" onClick={() => openEdit(user)}>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Edit" onClick={() => openEdit(user)}>
                                                         <FiEdit />
                                                     </button>
-                                                    <button className="btn btn-secondary btn-sm btn-icon" title={user.active ? "Désactiver" : "Réactiver"} onClick={() => toggleActive(user)}>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title={user.active ? "Deactivate" : "Reactivate"} onClick={() => toggleActive(user)}>
                                                         {user.active ? <FiUserX /> : <FiUserCheck />}
                                                     </button>
-                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Réinit. MDP" onClick={() => resetPassword(user.id)}>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Reset password" onClick={() => resetPassword(user.id)}>
                                                         <FiKey />
                                                     </button>
-                                                    <button className="btn btn-secondary btn-sm btn-icon" title="Historique" onClick={() => router.push(`/admin/users/${user.id}/history`)}>
+                                                    <button className="btn btn-secondary btn-sm btn-icon" title="History" onClick={() => router.push(`/admin/users/${user.id}/history`)}>
                                                         <FiClock />
                                                     </button>
                                                 </div>
@@ -299,20 +299,20 @@ export default function AdminUsersPage() {
                     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h3 className="modal-title">{editingUser ? "Modifier l'utilisateur" : "Nouvel utilisateur"}</h3>
+                                <h3 className="modal-title">{editingUser ? "Edit user" : "New user"}</h3>
                                 <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Matricule</label>
+                                <label className="form-label">Employee ID</label>
                                 <input type="text" name="matricule" className="form-input" value={form.matricule} onChange={handleChange} required />
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                                 <div className="form-group">
-                                    <label className="form-label">Nom</label>
+                                    <label className="form-label">Last name</label>
                                     <input type="text" name="nom" className="form-input" value={form.nom} onChange={handleChange} required />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Prénom</label>
+                                    <label className="form-label">First name</label>
                                     <input type="text" name="prenom" className="form-input" value={form.prenom} onChange={handleChange} required />
                                 </div>
                             </div>
@@ -321,7 +321,7 @@ export default function AdminUsersPage() {
                                 <input type="email" name="email" className="form-input" value={form.email} onChange={handleChange} required />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">{editingUser ? "Nouveau mot de passe (laisser vide pour garder)" : "Mot de passe"}</label>
+                                <label className="form-label">{editingUser ? "New password (leave empty to keep current)" : "Password"}</label>
                                 <input type="password" name="password" className="form-input" value={form.password} onChange={handleChange} required={!editingUser} />
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -334,17 +334,17 @@ export default function AdminUsersPage() {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Rôle</label>
+                                    <label className="form-label">Role</label>
                                     <select name="role" className="form-select" value={form.role} onChange={handleChange}>
-                                        <option value="USER">Utilisateur</option>
-                                        <option value="ADMIN">Administrateur</option>
+                                        <option value="USER">User</option>
+                                        <option value="ADMIN">Administrator</option>
                                     </select>
                                 </div>
                             </div>
                             <div className="form-actions">
-                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Annuler</button>
+                                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-                                    {saving ? <><span className="loading-spinner" /> Enregistrement...</> : editingUser ? "Modifier" : "Créer"}
+                                    {saving ? <><span className="loading-spinner" /> Saving...</> : editingUser ? "Update" : "Create"}
                                 </button>
                             </div>
                         </div>

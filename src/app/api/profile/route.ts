@@ -21,7 +21,7 @@ export async function GET() {
         },
     });
 
-    if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json(user);
 }
 
@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest) {
         const parsed = updateProfileSchema.safeParse(body);
         if (!parsed.success) {
             return NextResponse.json(
-                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { error: "Invalid data", details: parsed.error.flatten().fieldErrors },
                 { status: 400 }
             );
         }
@@ -55,6 +55,6 @@ export async function PUT(request: NextRequest) {
 
         return NextResponse.json({ success: true, user: updatedUser });
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la mise à jour");
+        return handleApiError(err, "Failed to update profile");
     }
 }

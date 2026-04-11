@@ -82,10 +82,10 @@ export default function ProfilePage() {
 
     const handleRemoveImage = async () => {
         const accepted = await confirm({
-            title: "Supprimer la photo",
-            message: "Voulez-vous vraiment supprimer la photo de profil ?",
-            confirmText: "Supprimer",
-            cancelText: "Annuler",
+            title: "Remove photo",
+            message: "Do you really want to remove the profile photo?",
+            confirmText: "Remove",
+            cancelText: "Cancel",
             danger: true,
         });
         if (!accepted) return;
@@ -100,16 +100,16 @@ export default function ProfilePage() {
 
             if (!res.ok) {
                 const err = await res.json();
-                notify.error(err.error || "Erreur lors de la suppression de l'image");
+                notify.error(err.error || "Failed to remove image");
                 return;
             }
 
             setFormData((prev) => ({ ...prev, image: null }));
             setUser((prev) => (prev ? { ...prev, image: null } : prev));
             await updateSession();
-            notify.success("Photo supprimée avec succès");
+            notify.success("Photo removed successfully");
         } catch {
-            notify.error("Erreur de connexion");
+            notify.error("Connection error");
         } finally {
             setSaving(false);
         }
@@ -128,26 +128,26 @@ export default function ProfilePage() {
             if (res.ok) {
                 // Rafraîchir la session NextAuth pour mettre à jour le header
                 await updateSession();
-                notify.success("Profil mis à jour avec succès");
+                notify.success("Profile updated successfully");
             } else {
                 const err = await res.json();
-                notify.error(err.error || "Erreur lors de la mise à jour");
+                notify.error(err.error || "Failed to update profile");
             }
         } catch {
-            notify.error("Erreur de connexion");
+            notify.error("Connection error");
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) return <div className="page-content">Chargement...</div>;
+    if (loading) return <div className="page-content">Loading...</div>;
 
     return (
         <>
-            <Header title="Mon Profil" subtitle="Gérer vos informations personnelles" />
+            <Header title="My Profile" subtitle="Manage your personal information" />
             <div className="page-content animate-in">
                 <div className="form-card" style={{ maxWidth: 600, margin: "0 auto" }}>
-                    <div className="form-card-title">Informations Personnelles</div>
+                    <div className="form-card-title">Personal Information</div>
 
                     <form onSubmit={handleSubmit}>
                         {/* Image Upload */}
@@ -163,7 +163,7 @@ export default function ProfilePage() {
                             </div>
                             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                                 <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
-                                    <FiUpload /> Changer la photo
+                                    <FiUpload /> Change photo
                                     <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageChange} />
                                 </label>
                                 {formData.image && (
@@ -173,7 +173,7 @@ export default function ProfilePage() {
                                         onClick={handleRemoveImage}
                                         disabled={saving}
                                     >
-                                        <FiTrash2 /> Supprimer la photo
+                                        <FiTrash2 /> Remove photo
                                     </button>
                                 )}
                             </div>
@@ -181,7 +181,7 @@ export default function ProfilePage() {
 
                         <div className="form-grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
                             <div className="form-group">
-                                <label className="form-label">Nom</label>
+                                <label className="form-label">Last name</label>
                                 <input
                                     name="nom"
                                     type="text"
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Prénom</label>
+                                <label className="form-label">First name</label>
                                 <input
                                     name="prenom"
                                     type="text"
@@ -217,7 +217,7 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Fonction (Lecture seule)</label>
+                            <label className="form-label">Role (read-only)</label>
                             <input
                                 type="text"
                                 className="form-input"
@@ -229,7 +229,7 @@ export default function ProfilePage() {
 
                         <div className="form-actions">
                             <button type="submit" className="btn btn-primary" disabled={saving}>
-                                {saving ? "Enregistrement..." : <><FiSave /> Enregistrer</>}
+                                {saving ? "Saving..." : <><FiSave /> Save</>}
                             </button>
                         </div>
                     </form>

@@ -178,6 +178,53 @@ Full CRUD lifecycle for DFC records with the following fields:
 - **Search & Filter** — text search, plus filters by project, type, feasibility, and open/closed status.
 - **Pagination** — 15 DFCs per page.
 
+### Feasibility File Management
+
+Each DFC can now store multiple feasibility files.
+
+**Rules and security:**
+
+- One-to-many association: one DFC -> many files
+- Allowed formats: `PDF`, `XLSX`, `CSV`, `DOC`, `DOCX`, `PNG`, `JPG`
+- Maximum size: `20 MB` per file
+- Access control: only the DFC creator or an ADMIN can list, upload, download, and delete files
+- Storage strategy: local filesystem under `storage/dfc-feasibility/` (files are never served directly as public static assets)
+
+**API endpoints:**
+
+- `GET /api/dfc/:id/files` -> list all files linked to a DFC
+- `POST /api/dfc/:id/files` -> upload one or multiple files (`multipart/form-data`, key: `files`)
+- `GET /api/dfc/:id/files/:fileId` -> get file metadata
+- `GET /api/dfc/:id/files/:fileId/download` -> download file (secured stream)
+- `DELETE /api/dfc/:id/files/:fileId` -> delete file (DB + storage sync)
+
+### DFC -> Derogations (One-to-Many)
+
+Each DFC can now have multiple derogation records.
+
+- `GET /api/dfc/:id/derogations` -> list derogations linked to the DFC
+- `POST /api/dfc/:id/derogations` -> create a derogation
+- `PUT /api/dfc/:id/derogations/:derogationId` -> update a derogation
+- `DELETE /api/dfc/:id/derogations/:derogationId` -> delete a derogation
+
+Legacy flat derogation fields stored in `DFC` are still accepted for compatibility and are backfilled into the dedicated `Derogation` table.
+
+### DFC -> ECO (0..1)
+
+For v1, each DFC can have zero or one ECO.
+
+- `GET /api/dfc/:id/eco` -> get ECO if present
+- `PUT /api/dfc/:id/eco` -> create or update ECO (upsert)
+- `DELETE /api/dfc/:id/eco` -> delete ECO
+
+ECO minimal model includes: `code`, `status`, `issuedAt`, `commentaire`.
+
+**Creation flow:**
+
+- In `New DFC`, users can select feasibility files before submit.
+- DFC is created first, then selected files are uploaded and linked to the new DFC.
+- If file upload fails after DFC creation, the DFC remains created and the user is redirected to the DFC detail page to retry uploads.
+
 ### AI-Powered Document Import
 
 Upload an existing DFC or Dérogation document and the system **automatically extracts and pre-fills** the form.
@@ -497,6 +544,8 @@ Open [http://localhost:3000](http://localhost:3000) to access the application.
 | `npm run build`    | Build for production                  |
 | `npm run start`    | Start production server               |
 | `npm run lint`     | Run ESLint                            |
+| `npm run test`     | Run automated tests (Vitest)          |
+| `npm run test:watch` | Run tests in watch mode             |
 | `npm run db:push`  | Push Prisma schema to database        |
 | `npm run db:seed`  | Seed the database with sample data    |
 | `npm run db:studio`| Open Prisma Studio (DB GUI)           |

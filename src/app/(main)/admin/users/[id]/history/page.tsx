@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Link from "next/link";
 import { FiArrowLeft, FiClock, FiRefreshCw, FiEdit, FiPlusCircle } from "react-icons/fi";
+import { formatDateTime } from "@/lib/i18n/format";
 
 interface UserInfo {
     id: string;
@@ -69,14 +70,14 @@ export default function UserHistoryPage() {
 
     const fieldLabels: Record<string, string> = {
         description: "Description",
-        faisabilite: "Faisabilité",
+        faisabilite: "Feasibility",
         typeDFC: "Type DFC",
-        commentaire: "Commentaire",
-        projectId: "Projet",
-        familyId: "Famille",
+        commentaire: "Comment",
+        projectId: "Project",
+        familyId: "Family",
         phaseId: "Phase",
-        numeroDerogation: "N° Dérogation",
-        STATUS: "Statut",
+        numeroDerogation: "Waiver number",
+        STATUS: "Status",
     };
 
     const creations = history.filter((h) => h.field === "STATUS" && h.newValue === "CREATED").length;
@@ -89,18 +90,18 @@ export default function UserHistoryPage() {
     return (
         <>
             <Header
-                title={user ? `Historique de ${user.prenom} ${user.nom}` : "Historique utilisateur"}
-                subtitle={user ? `${user.matricule} — ${fonctionLabel(user.fonction)}` : "Chargement..."}
+                title={user ? `${user.prenom} ${user.nom} history` : "User history"}
+                subtitle={user ? `${user.matricule} — ${fonctionLabel(user.fonction)}` : "Loading..."}
             />
             <div className="page-content animate-in">
                 {/* Back + Refresh bar */}
                 <div className="filters-bar">
                     <button className="btn btn-secondary" onClick={() => router.push("/admin/users")}>
-                        <FiArrowLeft /> Retour aux utilisateurs
+                        <FiArrowLeft /> Back to users
                     </button>
                     <div style={{ flex: 1 }} />
                     <button className="btn btn-secondary" onClick={fetchData}>
-                        <FiRefreshCw /> Actualiser
+                        <FiRefreshCw /> Refresh
                     </button>
                 </div>
 
@@ -115,7 +116,7 @@ export default function UserHistoryPage() {
                     </div>
                     <div className="stat-card">
                         <div className="stat-card-header">
-                            <div className="stat-card-label">DFC Créés</div>
+                            <div className="stat-card-label">DFCs created</div>
                             <div className="stat-card-icon green"><FiPlusCircle /></div>
                         </div>
                         <div className="stat-card-value">{creations}</div>
@@ -138,7 +139,7 @@ export default function UserHistoryPage() {
                                     <th>Date</th>
                                     <th>DFC</th>
                                     <th>Action</th>
-                                    <th>Détail</th>
+                                    <th>Details</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -153,14 +154,14 @@ export default function UserHistoryPage() {
                                 ) : history.length === 0 ? (
                                     <tr>
                                         <td colSpan={4} style={{ textAlign: "center", padding: 40, color: "var(--text-secondary)" }}>
-                                            Aucune activité enregistrée pour cet utilisateur
+                                            No activity recorded for this user
                                         </td>
                                     </tr>
                                 ) : (
                                     history.map((h) => (
                                         <tr key={h.id}>
                                             <td style={{ whiteSpace: "nowrap" }}>
-                                                {new Date(h.changedAt).toLocaleString("fr-FR")}
+                                                {formatDateTime(h.changedAt)}
                                             </td>
                                             <td>
                                                 <Link href={`/dfc/${h.dfc.id}`} className="link hover-underline">
@@ -172,17 +173,17 @@ export default function UserHistoryPage() {
                                             </td>
                                             <td>
                                                 {h.field === "STATUS" && h.newValue === "CREATED" ? (
-                                                    <span className="badge badge-success">Création</span>
+                                                    <span className="badge badge-success">Created</span>
                                                 ) : (
-                                                    <span className="badge badge-info">Modification</span>
+                                                    <span className="badge badge-info">Updated</span>
                                                 )}
                                             </td>
                                             <td>
                                                 {h.field === "STATUS" && h.newValue === "CREATED" ? (
-                                                    <span>A créé le DFC</span>
+                                                    <span>Created the DFC</span>
                                                 ) : (
                                                     <div>
-                                                        A modifié <strong>{fieldLabels[h.field] || h.field}</strong>
+                                                        Updated <strong>{fieldLabels[h.field] || h.field}</strong>
                                                         <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                                                             {h.oldValue && <span style={{ textDecoration: "line-through", marginRight: 8, color: "var(--text-secondary)" }}>{h.oldValue}</span>}
                                                             {h.newValue && <span style={{ color: "var(--success)" }}>→ {h.newValue}</span>}

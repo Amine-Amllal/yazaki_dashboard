@@ -125,20 +125,20 @@ const Navigation = React.memo(() => {
 
           <div className="hidden md:flex items-center justify-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <a href="#features" className="text-sm text-white/60 hover:text-white transition-colors">
-              Fonctionnalités
+              Features
             </a>
             <a href="#workflow" className="text-sm text-white/60 hover:text-white transition-colors">
-              Processus
+              Process
             </a>
             <a href="#stats" className="text-sm text-white/60 hover:text-white transition-colors">
-              Statistiques
+              Statistics
             </a>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
             <Link href="/login">
               <Button type="button" variant="gradient" size="sm">
-                Se connecter
+                Sign in
               </Button>
             </Link>
           </div>
@@ -162,26 +162,26 @@ const Navigation = React.memo(() => {
               className="text-sm text-white/60 hover:text-white transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Fonctionnalités
+              Features
             </a>
             <a
               href="#workflow"
               className="text-sm text-white/60 hover:text-white transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Processus
+              Process
             </a>
             <a
               href="#stats"
               className="text-sm text-white/60 hover:text-white transition-colors py-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Statistiques
+              Statistics
             </a>
             <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
               <Link href="/login">
                 <Button type="button" variant="gradient" size="sm" className="w-full">
-                  Se connecter
+                  Sign in
                 </Button>
               </Link>
             </div>
@@ -225,14 +225,14 @@ const Hero = React.memo(() => {
 
       <aside className="hero-stagger-1 mb-8 inline-flex flex-wrap items-center justify-center gap-2 px-4 py-2 rounded-full border border-[#E60012]/30 bg-[#E60012]/10 backdrop-blur-sm max-w-full relative z-10">
         <span className="text-xs text-center whitespace-nowrap text-[#E60012]">
-          Gestion des Modifications Techniques Yazaki
+          Yazaki Technical Change Management
         </span>
         <a
           href="#features"
           className="flex items-center gap-1 text-xs text-[#E60012] hover:text-white transition-all active:scale-95 whitespace-nowrap"
-          aria-label="En savoir plus sur les fonctionnalités"
+          aria-label="Learn more about the features"
         >
-          En savoir plus
+          Learn more
           <ArrowRight size={12} />
         </a>
       </aside>
@@ -247,7 +247,7 @@ const Hero = React.memo(() => {
           letterSpacing: "-0.04em"
         }}
       >
-        Optimisez vos <br />
+        Optimize your <br />
         <span
           style={{
             background: "linear-gradient(135deg, #E60012, #ff3344)",
@@ -256,14 +256,14 @@ const Hero = React.memo(() => {
             backgroundClip: "text",
           }}
         >
-          Modifications Techniques
+          Technical Changes
         </span>
       </h1>
 
       <p className="hero-stagger-3 text-sm md:text-base text-center max-w-2xl px-6 mb-10 text-gray-400 relative z-10">
-        Une plateforme complète pour la gestion des DFC et des ECO chez Yazaki Maroc.
+        A complete platform for managing DFCs and ECOs at Yazaki Morocco.
         <br />
-        Suivez, examinez et approuvez les modifications techniques avec une traçabilité complète.
+        Track, review, and approve technical changes with full traceability.
       </p>
 
       <div className="hero-stagger-4 flex flex-col items-center gap-5 relative z-10 mb-16">
@@ -273,15 +273,15 @@ const Hero = React.memo(() => {
             variant="gradient"
             size="lg"
             className="rounded-lg flex items-center justify-center gap-2"
-            aria-label="Se connecter à YECMS"
+            aria-label="Sign in to YECMS"
           >
-            Se connecter
+            Sign in
             <ArrowRight size={16} />
           </Button>
         </Link>
         <p className="text-sm text-gray-400 text-center">
-          Vous n&apos;avez pas de compte ?{" "}
-          <a href="mailto:admin@yazaki.com" className="text-[#E60012] hover:underline">Contactez votre administrateur : admin@yazaki.com</a>
+          Don&apos;t have an account?{" "}
+          <a href="mailto:admin@yazaki.com" className="text-[#E60012] hover:underline">Contact your administrator: admin@yazaki.com</a>
         </p>
       </div>
 
@@ -302,7 +302,7 @@ const Hero = React.memo(() => {
         <div className="relative z-10 rounded-xl border border-white/10 overflow-hidden shadow-2xl shadow-black/50">
           <img
             src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=675&fit=crop"
-            alt="Aperçu de l'interface d'analyse du tableau de bord"
+            alt="Dashboard analytics interface preview"
             className="w-full h-auto"
             loading="eager"
           />
@@ -319,33 +319,33 @@ Hero.displayName = "Hero";
 const features = [
   {
     icon: FileText,
-    title: "Gestion des DFC",
-    description: "Créez, suivez et gérez les demandes de modification technique avec des workflows structurés et un suivi automatique des statuts."
+    title: "DFC Management",
+    description: "Create, track, and manage technical change requests with structured workflows and automatic status tracking."
   },
   {
     icon: Shield,
-    title: "Accès par rôles",
-    description: "Contrôle d'accès sécurisé avec des rôles administrateur et utilisateur. Gérez les permissions et assurez que seul le personnel autorisé intervienne."
+    title: "Role-Based Access",
+    description: "Secure access control with administrator and user roles. Manage permissions and ensure only authorized staff can take action."
   },
   {
     icon: BarChart3,
-    title: "Tableau de bord analytique",
-    description: "Statistiques en temps réel et graphiques visuels pour suivre l'avancement des DFC, les taux d'approbation et la performance des équipes."
+    title: "Analytics Dashboard",
+    description: "Real-time statistics and visual charts to track DFC progress, approval rates, and team performance."
   },
   {
     icon: MessageCircle,
-    title: "Chatbot intelligent",
-    description: "Un assistant IA connecté directement à la base de données des DFC. Posez simplement votre question et obtenez instantanément des réponses précises sur vos modifications techniques."
+    title: "Smart Chatbot",
+    description: "An AI assistant connected directly to the DFC database. Ask your question and instantly get accurate answers about technical changes."
   },
   {
     icon: Zap,
     title: "Import PDF & Excel",
-    description: "Importez les données DFC depuis des documents PDF et des fichiers Excel avec prise en charge de l'OCR pour les documents numérisés."
+    description: "Import DFC data from PDF documents and Excel files, with OCR support for scanned documents."
   },
   {
     icon: Globe,
-    title: "Traçabilité & Collaboration",
-    description: "Historique complet des modifications et journaux d'audit détaillés. Collaborez en équipe sur les demandes avec un suivi transparent."
+    title: "Traceability and Collaboration",
+    description: "Complete change history and detailed audit logs. Collaborate as a team on requests with transparent tracking."
   }
 ];
 
@@ -356,7 +356,7 @@ const Features = React.memo(() => {
         <AnimateOnScroll animation="fade-up">
           <div className="text-center mb-16">
             <span className="text-xs uppercase tracking-widest text-[#E60012] font-semibold mb-4 block">
-              Fonctionnalités
+              Features
             </span>
             <h2
               className="text-3xl md:text-4xl font-bold mb-4"
@@ -367,10 +367,10 @@ const Features = React.memo(() => {
                 backgroundClip: "text",
               }}
             >
-              Tout ce qu'il faut pour gérer les modifications
+              Everything you need to manage changes
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Une suite complète d'outils conçus pour la gestion des modifications techniques chez Yazaki Maroc Meknès.
+              A complete suite of tools designed for managing technical changes at Yazaki Morocco Meknes.
             </p>
           </div>
         </AnimateOnScroll>
@@ -402,10 +402,10 @@ Features.displayName = "Features";
 
 // Workflow Section
 const workflowSteps = [
-  { step: "01", title: "Créer une DFC", description: "Initiez une nouvelle demande de modification technique avec toute la documentation requise." },
-  { step: "02", title: "Examiner & Valider", description: "Les responsables examinent la demande et valident les spécifications techniques." },
-  { step: "03", title: "Approuver & Exécuter", description: "La direction approuve les modifications et les équipes exécutent les changements techniques." },
-  { step: "04", title: "Suivre & Rapporter", description: "Surveillez l'avancement via les tableaux de bord et générez des rapports complets." },
+  { step: "01", title: "Create a DFC", description: "Start a new technical change request with all required documentation." },
+  { step: "02", title: "Review and Validate", description: "Owners review the request and validate technical specifications." },
+  { step: "03", title: "Approve and Execute", description: "Management approves changes and teams execute the technical updates." },
+  { step: "04", title: "Track and Report", description: "Monitor progress through dashboards and generate complete reports." },
 ];
 
 const Workflow = React.memo(() => {
@@ -415,7 +415,7 @@ const Workflow = React.memo(() => {
         <AnimateOnScroll animation="fade-up">
           <div className="text-center mb-16">
             <span className="text-xs uppercase tracking-widest text-[#E60012] font-semibold mb-4 block">
-              Processus
+              Process
             </span>
             <h2
               className="text-3xl md:text-4xl font-bold mb-4"
@@ -426,10 +426,10 @@ const Workflow = React.memo(() => {
                 backgroundClip: "text",
               }}
             >
-              Un processus simple et structuré
+              A simple and structured process
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Suivez un processus clair en 4 étapes pour gérer les modifications techniques de la création à la finalisation.
+              Follow a clear 4-step process to manage technical changes from creation to completion.
             </p>
           </div>
         </AnimateOnScroll>
@@ -464,10 +464,10 @@ Workflow.displayName = "Workflow";
 
 // Stats Section
 const stats = [
-  { value: "100%", label: "Traçabilité" },
-  { value: "4x", label: "Traitement plus rapide" },
-  { value: "24/7", label: "Accès" },
-  { value: "0", label: "Gaspillage papier" },
+  { value: "100%", label: "Traceability" },
+  { value: "4x", label: "Faster processing" },
+  { value: "24/7", label: "Access" },
+  { value: "0", label: "Paper waste" },
 ];
 
 const Stats = React.memo(() => {
@@ -505,10 +505,10 @@ const Footer = React.memo(() => {
           <div className="w-8 h-8 bg-gradient-to-br from-[#E60012] to-[#b8000e] rounded-lg flex items-center justify-center font-bold text-white text-xs">
             Y
           </div>
-          <span className="text-sm text-gray-400">YECMS &mdash; Yazaki Maroc Mekn&egrave;s</span>
+          <span className="text-sm text-gray-400">YECMS &mdash; Yazaki Morocco Meknes</span>
         </div>
         <p className="text-xs text-gray-500">
-          &copy; {new Date().getFullYear()} Yazaki. Tous droits réservés.
+          &copy; {new Date().getFullYear()} Yazaki. All rights reserved.
         </p>
       </div>
     </footer>

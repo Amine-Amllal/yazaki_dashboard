@@ -36,14 +36,14 @@ export async function POST(request: NextRequest) {
                 if (healthRes.ok) {
                     return NextResponse.json({ status: "ok" });
                 }
-                return NextResponse.json({ error: "Service indisponible" }, { status: 503 });
+                return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
             } catch {
-                return NextResponse.json({ error: "Service indisponible" }, { status: 503 });
+                return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
             }
         }
 
         if (!question || typeof question !== "string" || !question.trim()) {
-            return NextResponse.json({ error: "Question manquante" }, { status: 400 });
+            return NextResponse.json({ error: "Question is required" }, { status: 400 });
         }
 
         const ragRes = await fetch(`${RAG_SERVICE_URL}/api/chat`, {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
         if (!ragRes.ok) {
             return NextResponse.json(
-                { error: data.error || "Erreur du service IA" },
+                { error: data.error || "AI service error" },
                 { status: ragRes.status }
             );
         }
@@ -66,12 +66,12 @@ export async function POST(request: NextRequest) {
     } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") {
             return NextResponse.json(
-                { error: "Le service IA met trop de temps à répondre. Réessayez." },
+                { error: "The AI service is taking too long to respond. Please try again." },
                 { status: 504 }
             );
         }
         return NextResponse.json(
-            { error: "Impossible de contacter le service IA. Vérifiez qu'il est démarré." },
+            { error: "Unable to reach the AI service. Verify it is running." },
             { status: 502 }
         );
     }

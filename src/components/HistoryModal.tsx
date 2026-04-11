@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FiX, FiClock } from "react-icons/fi";
+import { formatDateTime } from "@/lib/i18n/format";
 
 interface HistoryEntry {
     id: string;
@@ -46,29 +47,29 @@ export default function HistoryModal({ isOpen, onClose, dfcId, initialHistory }:
 
     const fieldLabels: Record<string, string> = {
         description: "Description",
-        faisabilite: "Faisabilité",
+        faisabilite: "Feasibility",
         typeDFC: "Type DFC",
-        commentaire: "Commentaire",
-        projectId: "Projet",
-        familyId: "Famille",
+        commentaire: "Comment",
+        projectId: "Project",
+        familyId: "Family",
         phaseId: "Phase",
-        numeroDerogation: "N° Dérogation",
-        STATUS: "Statut",
+        numeroDerogation: "Waiver number",
+        STATUS: "Status",
     };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
                 <div className="modal-header">
-                    <h3 className="modal-title">Historique du DFC</h3>
+                    <h3 className="modal-title">DFC History</h3>
                     <button className="modal-close" onClick={onClose}><FiX /></button>
                 </div>
                 <div className="modal-body">
                     {loading ? (
-                        <div style={{ textAlign: "center", padding: 20 }}>Chargement...</div>
+                        <div style={{ textAlign: "center", padding: 20 }}>Loading...</div>
                     ) : history.length === 0 ? (
                         <div style={{ textAlign: "center", padding: 20, color: "var(--text-secondary)" }}>
-                            Aucun historique disponible
+                            No history available
                         </div>
                     ) : (
                         <div style={{ display: "grid", gap: 12 }}>
@@ -79,9 +80,9 @@ export default function HistoryModal({ isOpen, onClose, dfcId, initialHistory }:
                                         <div style={{ fontSize: 14 }}>
                                             <strong>{h.user.prenom} {h.user.nom}</strong>
                                             {h.field === "STATUS" && h.newValue === "CREATED" ? (
-                                                <span> a créé le DFC</span>
+                                                <span> created the DFC</span>
                                             ) : (
-                                                <> a modifié <strong>{fieldLabels[h.field] || h.field}</strong></>
+                                                <> updated <strong>{fieldLabels[h.field] || h.field}</strong></>
                                             )}
                                         </div>
                                         {!(h.field === "STATUS" && h.newValue === "CREATED") && (
@@ -91,7 +92,7 @@ export default function HistoryModal({ isOpen, onClose, dfcId, initialHistory }:
                                             </div>
                                         )}
                                         <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-                                            {new Date(h.changedAt).toLocaleString("fr-FR")}
+                                            {formatDateTime(h.changedAt)}
                                         </div>
                                     </div>
                                 </div>

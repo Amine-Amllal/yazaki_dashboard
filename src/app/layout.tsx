@@ -5,7 +5,7 @@ import { FeedbackProvider } from "@/components/ui/feedback-provider";
 
 export const metadata: Metadata = {
   title: "YECMS - Yazaki Engineering Change Management",
-  description: "Plateforme de gestion des DFC et ECO - Yazaki Morocco Meknès",
+  description: "DFC and ECO management platform - Yazaki Morocco Meknes",
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="en">
       <body>
         <SessionProvider>
           <FeedbackProvider>{children}</FeedbackProvider>

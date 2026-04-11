@@ -29,15 +29,15 @@ export default function Sidebar({ collapsed, toggle }: SidebarProps) {
 
     const userLinks = [
         { href: "/dashboard", label: "Dashboard", icon: <FiHome /> },
-        { href: "/dfc", label: "Liste des DFC", icon: <FiFileText /> },
-        { href: "/dfc/new", label: "Nouveau DFC", icon: <FiPlusCircle /> },
+        { href: "/dfc", label: "DFC List", icon: <FiFileText /> },
+        { href: "/dfc/new", label: "New DFC", icon: <FiPlusCircle /> },
     ];
 
     const adminLinks = [
-        { href: "/admin/dashboard", label: "Dashboard Admin", icon: <FiBarChart2 /> },
-        { href: "/admin/users", label: "Utilisateurs", icon: <FiUsers /> },
-        { href: "/admin/settings", label: "Données de référence", icon: <FiDatabase /> },
-        { href: "/admin/history", label: "Historique Global", icon: <FiClock /> },
+        { href: "/admin/dashboard", label: "Admin Dashboard", icon: <FiBarChart2 /> },
+        { href: "/admin/users", label: "Users", icon: <FiUsers /> },
+        { href: "/admin/settings", label: "Reference Data", icon: <FiDatabase /> },
+        { href: "/admin/history", label: "Global History", icon: <FiClock /> },
     ];
 
     return (
@@ -117,17 +117,17 @@ export default function Sidebar({ collapsed, toggle }: SidebarProps) {
                     }}
                 >
                     {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
-                    {!collapsed && <span style={{ marginLeft: 12 }}>Réduire</span>}
+                    {!collapsed && <span style={{ marginLeft: 12 }}>Collapse</span>}
                 </button>
 
                 <button
                     onClick={() => signOut({ callbackUrl: "/login" })}
                     className="sidebar-link"
                     style={{ width: "100%", border: "none", background: "none", cursor: "pointer", justifyContent: collapsed ? "center" : "flex-start" }}
-                    title={collapsed ? "Déconnexion" : ""}
+                    title={collapsed ? "Sign out" : ""}
                 >
                     <span style={{ fontSize: 20 }}><FiLogOut /></span>
-                    {!collapsed && <span style={{ marginLeft: 12 }}>Déconnexion</span>}
+                    {!collapsed && <span style={{ marginLeft: 12 }}>Sign out</span>}
                 </button>
             </div>
         </aside>

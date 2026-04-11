@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         const parsed = createReferenceSchema.safeParse(body);
         if (!parsed.success) {
             return NextResponse.json(
-                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { error: "Invalid data", details: parsed.error.flatten().fieldErrors },
                 { status: 400 }
             );
         }
@@ -41,11 +41,11 @@ export async function POST(request: NextRequest) {
         } else if (type === "phase") {
             result = await prisma.phase.create({ data: { name } });
         } else {
-            return NextResponse.json({ error: "Type invalide" }, { status: 400 });
+            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
         return NextResponse.json(result, { status: 201 });
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la création (doublon ?)");
+        return handleApiError(err, "Failed to create reference item");
     }
 }
 
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest) {
         const parsed = updateReferenceSchema.safeParse(body);
         if (!parsed.success) {
             return NextResponse.json(
-                { error: "Données invalides", details: parsed.error.flatten().fieldErrors },
+                { error: "Invalid data", details: parsed.error.flatten().fieldErrors },
                 { status: 400 }
             );
         }
@@ -73,11 +73,11 @@ export async function PUT(request: NextRequest) {
         } else if (type === "phase") {
             await prisma.phase.update({ where: { id }, data: { name } });
         } else {
-            return NextResponse.json({ error: "Type invalide" }, { status: 400 });
+            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
         return NextResponse.json({ success: true });
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la modification");
+        return handleApiError(err, "Failed to update reference item");
     }
 }
 
@@ -90,7 +90,7 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!type || !id) {
-        return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
+        return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
     try {
@@ -101,10 +101,10 @@ export async function DELETE(request: NextRequest) {
         } else if (type === "phase") {
             await prisma.phase.delete({ where: { id } });
         } else {
-            return NextResponse.json({ error: "Type invalide" }, { status: 400 });
+            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
         return NextResponse.json({ success: true });
     } catch (err: unknown) {
-        return handleApiError(err, "Erreur lors de la suppression");
+        return handleApiError(err, "Failed to delete reference item");
     }
 }

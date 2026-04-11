@@ -76,8 +76,8 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
         kind: "confirm",
         title: options.title ?? "Confirmation",
         message: options.message,
-        confirmText: options.confirmText ?? "Confirmer",
-        cancelText: options.cancelText ?? "Annuler",
+        confirmText: options.confirmText ?? "Confirm",
+        cancelText: options.cancelText ?? "Cancel",
         danger: options.danger ?? false,
       });
     });
@@ -89,10 +89,10 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
       confirmResolverRef.current = null;
       setDialog({
         kind: "prompt",
-        title: options.title ?? "Saisie requise",
+        title: options.title ?? "Input required",
         message: options.message ?? "",
-        confirmText: options.confirmText ?? "Valider",
-        cancelText: options.cancelText ?? "Annuler",
+        confirmText: options.confirmText ?? "Submit",
+        cancelText: options.cancelText ?? "Cancel",
         danger: options.danger ?? false,
         placeholder: options.placeholder ?? "",
         value: options.defaultValue ?? "",
@@ -153,7 +153,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
                 type="button"
                 className="app-toast-close"
                 onClick={() => removeToast(toast.id)}
-                aria-label="Fermer la notification"
+                aria-label="Close notification"
               >
                 <FiX />
               </button>

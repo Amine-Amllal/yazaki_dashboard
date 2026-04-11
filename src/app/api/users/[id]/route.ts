@@ -22,12 +22,12 @@ export async function GET(
         });
 
         if (!user) {
-            return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
         return NextResponse.json(user);
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la récupération de l'utilisateur");
+        return handleApiError(err, "Failed to fetch user");
     }
 }
 
@@ -63,7 +63,7 @@ export async function PUT(
 
         return NextResponse.json(user);
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la modification");
+        return handleApiError(err, "Failed to update user");
     }
 }
 
@@ -81,8 +81,8 @@ export async function DELETE(
             where: { id },
             data: { active: false },
         });
-        return NextResponse.json({ message: "Utilisateur désactivé" });
+        return NextResponse.json({ message: "User deactivated" });
     } catch (err) {
-        return handleApiError(err, "Erreur lors de la désactivation");
+        return handleApiError(err, "Failed to deactivate user");
     }
 }

@@ -64,7 +64,7 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
                 type="button"
             >
                 <FiFilter />
-                <span>Filtres avancés</span>
+                <span>Advanced filters</span>
                 {activeCount > 0 && <span className="filter-count-badge">{activeCount}</span>}
                 {expanded ? <FiChevronUp /> : <FiChevronDown />}
             </button>
@@ -72,9 +72,9 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
             {expanded && (
                 <div className="dashboard-filters-panel" onKeyDown={handleKeyDown}>
                     <div className="dashboard-filters-grid">
-                        {/* Période */}
+                        {/* Date range */}
                         <div className="filter-group">
-                            <label className="filter-label">Date début</label>
+                            <label className="filter-label">Start date</label>
                             <input
                                 type="date"
                                 className="filter-input"
@@ -83,7 +83,7 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
                             />
                         </div>
                         <div className="filter-group">
-                            <label className="filter-label">Date fin</label>
+                            <label className="filter-label">End date</label>
                             <input
                                 type="date"
                                 className="filter-input"
@@ -92,30 +92,30 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
                             />
                         </div>
 
-                        {/* Projet */}
+                        {/* Project */}
                         <div className="filter-group">
-                            <label className="filter-label">Projet</label>
+                            <label className="filter-label">Project</label>
                             <select
                                 className="filter-input"
                                 value={filters.projectId}
                                 onChange={(e) => handleChange("projectId", e.target.value)}
                             >
-                                <option value="">Tous les projets</option>
+                                <option value="">All projects</option>
                                 {filterOptions?.projects.map((p) => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* Famille */}
+                        {/* Family */}
                         <div className="filter-group">
-                            <label className="filter-label">Famille de produits</label>
+                            <label className="filter-label">Product family</label>
                             <select
                                 className="filter-input"
                                 value={filters.familyId}
                                 onChange={(e) => handleChange("familyId", e.target.value)}
                             >
-                                <option value="">Toutes les familles</option>
+                                <option value="">All families</option>
                                 {filterOptions?.families.map((f) => (
                                     <option key={f.id} value={f.id}>{f.name}</option>
                                 ))}
@@ -124,13 +124,13 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
 
                         {/* Type DFC */}
                         <div className="filter-group">
-                            <label className="filter-label">Type de DFC</label>
+                            <label className="filter-label">DFC type</label>
                             <select
                                 className="filter-input"
                                 value={filters.typeDFC}
                                 onChange={(e) => handleChange("typeDFC", e.target.value)}
                             >
-                                <option value="">Tous les types</option>
+                                <option value="">All types</option>
                                 <option value="T1">T1</option>
                                 <option value="T2">T2</option>
                                 <option value="T3">T3</option>
@@ -138,48 +138,48 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
                             </select>
                         </div>
 
-                        {/* Statut */}
+                        {/* Status */}
                         <div className="filter-group">
-                            <label className="filter-label">Statut</label>
+                            <label className="filter-label">Status</label>
                             <select
                                 className="filter-input"
                                 value={filters.statut}
                                 onChange={(e) => handleChange("statut", e.target.value)}
                             >
-                                <option value="">Tous les statuts</option>
-                                <option value="ouvert">Ouvert</option>
-                                <option value="ferme">Fermé</option>
+                                <option value="">All statuses</option>
+                                <option value="open">Open</option>
+                                <option value="closed">Closed</option>
                             </select>
                         </div>
 
-                        {/* Responsable */}
+                        {/* Owner */}
                         <div className="filter-group">
-                            <label className="filter-label">Responsable</label>
+                            <label className="filter-label">Owner</label>
                             <select
                                 className="filter-input"
                                 value={filters.responsableId}
                                 onChange={(e) => handleChange("responsableId", e.target.value)}
                             >
-                                <option value="">Tous les responsables</option>
+                                <option value="">All owners</option>
                                 {filterOptions?.users.map((u) => (
                                     <option key={u.id} value={u.id}>{u.name}</option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* Faisabilité */}
+                        {/* Feasibility */}
                         <div className="filter-group">
-                            <label className="filter-label">Faisabilité</label>
+                            <label className="filter-label">Feasibility</label>
                             <select
                                 className="filter-input"
                                 value={filters.faisabilite}
                                 onChange={(e) => handleChange("faisabilite", e.target.value)}
                             >
-                                <option value="">Toutes</option>
-                                <option value="OUI">Oui</option>
-                                <option value="NON">Non</option>
-                                <option value="EN_COURS">En cours (OG)</option>
-                                <option value="A_CLARIFIER">À clarifier (NC)</option>
+                                <option value="">All</option>
+                                <option value="OUI">Yes</option>
+                                <option value="NON">No</option>
+                                <option value="EN_COURS">In progress (OG)</option>
+                                <option value="A_CLARIFIER">Needs clarification (NC)</option>
                             </select>
                         </div>
                     </div>
@@ -187,12 +187,12 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
                     <div className="dashboard-filters-actions">
                         <button className="btn btn-primary btn-sm" onClick={onApply} type="button">
                             <FiFilter size={14} />
-                            Appliquer
+                            Apply
                         </button>
                         {activeCount > 0 && (
                             <button className="btn btn-outline btn-sm" onClick={handleReset} type="button">
                                 <FiX size={14} />
-                                Réinitialiser
+                                Reset
                             </button>
                         )}
                     </div>

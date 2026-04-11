@@ -9,6 +9,7 @@ import {
     FiDatabase,
     FiCpu,
 } from "react-icons/fi";
+import { APP_LOCALE } from "@/lib/i18n/messages";
 
 interface Message {
     id: string;
@@ -19,10 +20,10 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-    "Combien de DFC avons-nous au total ?",
-    "Quels DFC sont en cours de faisabilité ?",
-    "Donne-moi la liste de tous les DFC",
-    "Quels projets ont le plus de DFC ?",
+    "How many DFCs do we have in total?",
+    "Which DFCs are still in feasibility review?",
+    "Give me the full list of DFCs",
+    "Which projects have the most DFCs?",
 ];
 
 export default function ChatBot() {
@@ -32,7 +33,7 @@ export default function ChatBot() {
             id: "welcome",
             role: "system",
             content:
-                "Bonjour ! Je suis l'assistant IA de YECMS. Posez-moi une question sur les DFC, les projets, ou les statistiques.",
+                "Hello! I am the YECMS AI assistant. Ask me anything about DFCs, projects, or statistics.",
             timestamp: new Date(),
         },
     ]);
@@ -114,7 +115,7 @@ export default function ChatBot() {
                     role: "system",
                     content:
                         data.error ||
-                        "Une erreur est survenue. Vérifiez que le service RAG est démarré.",
+                        "An error occurred. Check that the RAG service is running.",
                     timestamp: new Date(),
                 };
                 setMessages((prev) => [...prev, errMsg]);
@@ -127,7 +128,7 @@ export default function ChatBot() {
                     id: `err-${Date.now()}`,
                     role: "system",
                     content:
-                        "Impossible de contacter le service IA. Démarrez le serveur Flask (python rag.py).",
+                        "Unable to reach the AI service. Start the Flask server (python rag.py).",
                     timestamp: new Date(),
                 },
             ]);
@@ -150,7 +151,7 @@ export default function ChatBot() {
                 id: "welcome",
                 role: "system",
                 content:
-                    "Conversation effacée. Posez-moi une nouvelle question !",
+                    "Conversation cleared. Ask me a new question!",
                 timestamp: new Date(),
             },
         ]);
@@ -181,17 +182,17 @@ export default function ChatBot() {
 
     return (
         <>
-            {/* Bouton flottant */}
+            {/* Floating button */}
             <button
                 className={`chatbot-fab ${isOpen ? "chatbot-fab-hidden" : ""}`}
                 onClick={() => setIsOpen(true)}
-                title="Assistant IA YECMS"
+                title="YECMS AI Assistant"
             >
                 <FiMessageSquare size={22} />
                 <span className="chatbot-fab-pulse" />
             </button>
 
-            {/* Panneau de chat */}
+            {/* Chat panel */}
             <div className={`chatbot-panel ${isOpen ? "chatbot-panel-open" : ""}`}>
                 {/* Header */}
                 <div className="chatbot-header">
@@ -201,7 +202,7 @@ export default function ChatBot() {
                         </div>
                         <div>
                             <div className="chatbot-header-title">
-                                Assistant IA
+                                AI Assistant
                             </div>
                             <div className="chatbot-header-status">
                                 <span
@@ -214,10 +215,10 @@ export default function ChatBot() {
                                     }`}
                                 />
                                 {isConnected === true
-                                    ? "Connecté"
+                                    ? "Connected"
                                     : isConnected === false
-                                    ? "Déconnecté"
-                                    : "Vérification..."}
+                                    ? "Disconnected"
+                                    : "Checking..."}
                             </div>
                         </div>
                     </div>
@@ -225,14 +226,14 @@ export default function ChatBot() {
                         <button
                             className="chatbot-header-btn"
                             onClick={clearChat}
-                            title="Effacer la conversation"
+                            title="Clear conversation"
                         >
                             <FiRotateCw size={14} />
                         </button>
                         <button
                             className="chatbot-header-btn"
                             onClick={() => setIsOpen(false)}
-                            title="Fermer"
+                            title="Close"
                         >
                             <FiX size={16} />
                         </button>
@@ -261,13 +262,13 @@ export default function ChatBot() {
                                         <span>
                                             {msg.sources.length} source
                                             {msg.sources.length > 1 ? "s" : ""}{" "}
-                                            consultée
+                                            checked
                                             {msg.sources.length > 1 ? "s" : ""}
                                         </span>
                                     </div>
                                 )}
                                 <div className="chatbot-msg-time">
-                                    {msg.timestamp.toLocaleTimeString("fr-FR", {
+                                    {msg.timestamp.toLocaleTimeString(APP_LOCALE, {
                                         hour: "2-digit",
                                         minute: "2-digit",
                                     })}
@@ -315,7 +316,7 @@ export default function ChatBot() {
                         ref={inputRef}
                         type="text"
                         className="chatbot-input"
-                        placeholder="Posez votre question..."
+                        placeholder="Ask your question..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -331,7 +332,7 @@ export default function ChatBot() {
                 </div>
             </div>
 
-            {/* Overlay mobile */}
+            {/* Mobile overlay */}
             {isOpen && (
                 <div
                     className="chatbot-overlay"

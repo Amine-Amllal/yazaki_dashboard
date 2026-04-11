@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { FiClock, FiRefreshCw } from "react-icons/fi";
 import Link from "next/link";
+import { formatDateTime } from "@/lib/i18n/format";
 
 interface HistoryEntry {
     id: string;
@@ -76,30 +77,30 @@ export default function GlobalHistoryPage() {
 
     const fieldLabels: Record<string, string> = {
         description: "Description",
-        faisabilite: "Faisabilité",
+        faisabilite: "Feasibility",
         typeDFC: "Type DFC",
-        commentaire: "Commentaire",
-        projectId: "Projet",
-        familyId: "Famille",
+        commentaire: "Comment",
+        projectId: "Project",
+        familyId: "Family",
         phaseId: "Phase",
-        numeroDerogation: "N° Dérogation",
-        STATUS: "Statut",
+        numeroDerogation: "Waiver number",
+        STATUS: "Status",
     };
 
     return (
         <>
-            <Header title="Historique Global" subtitle="Tracabilité de toutes les actions" />
+            <Header title="Global history" subtitle="Traceability of all actions" />
             <div className="page-content animate-in">
                 <div className="filters-bar">
                     <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)" }}>
-                        <FiClock /> Dernières activités
+                        <FiClock /> Latest activity
                     </div>
                     <select
                         className="filter-select"
                         value={selectedUserId}
                         onChange={(e) => setSelectedUserId(e.target.value)}
                     >
-                        <option value="">Tous les utilisateurs</option>
+                        <option value="">All users</option>
                         {users.map((u) => (
                             <option key={u.id} value={u.id}>
                                 {u.prenom} {u.nom} ({u.matricule})
@@ -108,7 +109,7 @@ export default function GlobalHistoryPage() {
                     </select>
                     <div style={{ flex: 1 }} />
                     <button className="btn btn-secondary" onClick={fetchHistory}>
-                        <FiRefreshCw /> Actualiser
+                        <FiRefreshCw /> Refresh
                     </button>
                 </div>
 
@@ -118,10 +119,10 @@ export default function GlobalHistoryPage() {
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Utilisateur</th>
+                                    <th>User</th>
                                     <th>DFC</th>
                                     <th>Action</th>
-                                    <th>Détail</th>
+                                    <th>Details</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -136,14 +137,14 @@ export default function GlobalHistoryPage() {
                                 ) : history.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} style={{ textAlign: "center", padding: 40 }}>
-                                            Aucun historique trouvé
+                                            No history found
                                         </td>
                                     </tr>
                                 ) : (
                                     history.map((h) => (
                                         <tr key={h.id}>
                                             <td style={{ whiteSpace: "nowrap" }}>
-                                                {new Date(h.changedAt).toLocaleString("fr-FR")}
+                                                {formatDateTime(h.changedAt)}
                                             </td>
                                             <td>
                                                 <div>
@@ -161,17 +162,17 @@ export default function GlobalHistoryPage() {
                                             </td>
                                             <td>
                                                 {h.field === "STATUS" && h.newValue === "CREATED" ? (
-                                                    <span className="badge badge-success">Création</span>
+                                                    <span className="badge badge-success">Created</span>
                                                 ) : (
-                                                    <span className="badge badge-info">Modification</span>
+                                                    <span className="badge badge-info">Updated</span>
                                                 )}
                                             </td>
                                             <td>
                                                 {h.field === "STATUS" && h.newValue === "CREATED" ? (
-                                                    <span>A créé le DFC</span>
+                                                    <span>Created the DFC</span>
                                                 ) : (
                                                     <div>
-                                                        A modifié <strong>{fieldLabels[h.field] || h.field}</strong>
+                                                        Updated <strong>{fieldLabels[h.field] || h.field}</strong>
                                                         <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                                                             {h.oldValue && <span style={{ textDecoration: "line-through", marginRight: 8, color: "var(--text-secondary)" }}>{h.oldValue}</span>}
                                                             {h.newValue && <span style={{ color: "var(--success)" }}>→ {h.newValue}</span>}

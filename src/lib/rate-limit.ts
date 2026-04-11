@@ -25,6 +25,8 @@ export const RATE_LIMIT_PRESETS = {
     CHAT: { maxRequests: 10, windowSizeInSeconds: 60 },
     /** Import fichier : 5 imports par minute (CPU-intensive OCR) */
     IMPORT: { maxRequests: 5, windowSizeInSeconds: 60 },
+    /** Upload fichiers faisabilite : 10 uploads par minute */
+    FILE_UPLOAD: { maxRequests: 10, windowSizeInSeconds: 60 },
     /** Création DFC : 20 créations par minute */
     CREATE: { maxRequests: 20, windowSizeInSeconds: 60 },
     /** Création utilisateur : 10 par minute */
@@ -180,7 +182,7 @@ export function applyRateLimit(
     if (!result.allowed) {
         const response = NextResponse.json(
             {
-                error: "Trop de requêtes. Veuillez réessayer plus tard.",
+                error: "Too many requests. Please try again later.",
                 retryAfter: result.resetInSeconds,
             },
             { status: 429 }

@@ -39,7 +39,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
         if (fonction === "PP_RESPONSIBLE") return "PP Responsible";
         if (fonction === "PP_TECHNICIAN") return "PP Technician";
         if (fonction === "PP_COORDINATOR") return "PP Coordinator";
-        return "Utilisateur";
+        return "User";
     })();
 
     return (
@@ -62,7 +62,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                             <div className="header-avatar">{initials}</div>
                         )}
                         <div className="header-user-info">
-                            <div className="header-user-name">{user?.name || "Utilisateur"}</div>
+                            <div className="header-user-name">{user?.name || "User"}</div>
                             <div className="header-user-role">
                                 {fonctionLabel}
                             </div>

@@ -8,6 +8,8 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
+import { formatDate } from "@/lib/i18n/format";
+import { faisabilityLabels } from "@/lib/i18n/messages";
 
 const COLORS = ["#E60012", "#231F20", "#ff4d4d", "#4a4a4a", "#94a3b8"];
 const FAIS_COLORS = ["#06d6a0", "#ef476f", "#ffd166", "#118ab2"];
@@ -20,7 +22,7 @@ interface Stats {
     dfcByType: { name: string; count: number }[];
     dfcByProject: { name: string; count: number }[];
     dfcByFaisabilite: { name: string; count: number }[];
-    monthlyData: { month: string; reçus: number; répondus: number }[];
+    monthlyData: { month: string; received: number; answered: number }[];
     recentDFCs: {
         id: string;
         numero: number;
@@ -75,7 +77,7 @@ export default function DashboardPage() {
     if (loading) {
         return (
             <>
-                <Header title="Dashboard" subtitle="Vue d'ensemble des DFC" />
+                <Header title="Dashboard" subtitle="DFC overview" />
                 <div className="page-content">
                     <div className="stats-grid">
                         {[1, 2, 3, 4].map((i) => (
@@ -92,8 +94,7 @@ export default function DashboardPage() {
 
     if (!stats) return null;
 
-    const faisabiliteLabel = (f: string) =>
-        f === "OUI" ? "Oui" : f === "NON" ? "Non" : f === "EN_COURS" ? "En cours" : "À clarifier";
+    const faisabiliteLabel = (f: string) => faisabilityLabels[f] || f;
 
     const faisabiliteBadge = (f: string) =>
         f === "OUI" ? "badge-success" :
@@ -102,7 +103,7 @@ export default function DashboardPage() {
 
     return (
         <>
-            <Header title="Dashboard" subtitle="Vue d'ensemble des DFC" />
+            <Header title="Dashboard" subtitle="DFC overview" />
             <div className="page-content animate-in">
                 {/* Advanced Filters */}
                 <DashboardFilters
@@ -125,21 +126,21 @@ export default function DashboardPage() {
                         <div className="stat-card-header">
                             <div className="stat-card-icon orange"><FiClock /></div>
                         </div>
-                        <div className="stat-card-label">DFC Ouverts</div>
+                        <div className="stat-card-label">Open DFCs</div>
                         <div className="stat-card-value">{stats.dfcOuverts}</div>
                     </div>
                     <div className="stat-card">
                         <div className="stat-card-header">
                             <div className="stat-card-icon green"><FiCheckCircle /></div>
                         </div>
-                        <div className="stat-card-label">DFC Fermés</div>
+                        <div className="stat-card-label">Closed DFCs</div>
                         <div className="stat-card-value">{stats.dfcFermes}</div>
                     </div>
                     <div className="stat-card">
                         <div className="stat-card-header">
                             <div className="stat-card-icon red"><FiAlertCircle /></div>
                         </div>
-                        <div className="stat-card-label">Délai moyen (jours)</div>
+                        <div className="stat-card-label">Average lead time (days)</div>
                         <div className="stat-card-value">{stats.delaiMoyen}</div>
                     </div>
                 </div>
@@ -149,7 +150,7 @@ export default function DashboardPage() {
                     {/* Monthly Trend */}
                     <div className="chart-card">
                         <div className="chart-card-header">
-                            <h3 className="chart-card-title">Évolution mensuelle</h3>
+                            <h3 className="chart-card-title">Monthly trend</h3>
                         </div>
                         <ResponsiveContainer width="100%" height={280}>
                             <LineChart data={stats.monthlyData}>
@@ -158,8 +159,8 @@ export default function DashboardPage() {
                                 <YAxis tick={{ fontSize: 12 }} />
                                 <Tooltip />
                                 <Legend />
-                                <Line type="monotone" dataKey="reçus" stroke="#E60012" strokeWidth={2} dot={{ r: 4 }} />
-                                <Line type="monotone" dataKey="répondus" stroke="#06d6a0" strokeWidth={2} dot={{ r: 4 }} />
+                                <Line type="monotone" dataKey="received" stroke="#E60012" strokeWidth={2} dot={{ r: 4 }} name="Received" />
+                                <Line type="monotone" dataKey="answered" stroke="#06d6a0" strokeWidth={2} dot={{ r: 4 }} name="Answered" />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -167,7 +168,7 @@ export default function DashboardPage() {
                     {/* DFC by Type */}
                     <div className="chart-card">
                         <div className="chart-card-header">
-                            <h3 className="chart-card-title">DFC par type</h3>
+                            <h3 className="chart-card-title">DFCs by type</h3>
                         </div>
                         <ResponsiveContainer width="100%" height={280}>
                             <PieChart>
@@ -185,7 +186,7 @@ export default function DashboardPage() {
                     {/* DFC by Project */}
                     <div className="chart-card">
                         <div className="chart-card-header">
-                            <h3 className="chart-card-title">DFC par projet</h3>
+                            <h3 className="chart-card-title">DFCs by project</h3>
                         </div>
                         <ResponsiveContainer width="100%" height={280}>
                             <BarChart data={stats.dfcByProject}>
@@ -198,10 +199,10 @@ export default function DashboardPage() {
                         </ResponsiveContainer>
                     </div>
 
-                    {/* DFC by Faisabilite */}
+                    {/* DFC by feasibility */}
                     <div className="chart-card">
                         <div className="chart-card-header">
-                            <h3 className="chart-card-title">Faisabilité</h3>
+                            <h3 className="chart-card-title">Feasibility</h3>
                         </div>
                         <ResponsiveContainer width="100%" height={280}>
                             <PieChart>
@@ -220,7 +221,7 @@ export default function DashboardPage() {
                 {/* Recent DFCs */}
                 <div className="table-card">
                     <div className="table-header">
-                        <h3 className="table-title">DFC récents</h3>
+                        <h3 className="table-title">Recent DFCs</h3>
                     </div>
                     <div className="table-wrapper">
                         <table>
@@ -228,10 +229,10 @@ export default function DashboardPage() {
                                 <tr>
                                     <th>N°</th>
                                     <th>Description</th>
-                                    <th>Projet</th>
+                                    <th>Project</th>
                                     <th>Type</th>
-                                    <th>Faisabilité</th>
-                                    <th>Date réception</th>
+                                    <th>Feasibility</th>
+                                    <th>Received date</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -248,7 +249,7 @@ export default function DashboardPage() {
                                                 {faisabiliteLabel(dfc.faisabilite)}
                                             </span>
                                         </td>
-                                        <td>{new Date(dfc.dateReception).toLocaleDateString("fr-FR")}</td>
+                                        <td>{formatDate(dfc.dateReception)}</td>
                                     </tr>
                                 ))}
                             </tbody>

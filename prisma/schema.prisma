@@ -23,6 +23,9 @@ model User {
 
   dfcs       DFC[]
   histories  DFCHistory[]
+  files      DFCFile[] @relation("FileUploader")
+  derogations Derogation[] @relation("DerogationCreator")
+  ecos        ECO[] @relation("EcoCreator")
 }
 
 model Project {
@@ -72,6 +75,9 @@ model DFC {
   phase     Phase        @relation(fields: [phaseId], references: [id])
   createdBy User         @relation(fields: [createdById], references: [id])
   histories DFCHistory[]
+  files     DFCFile[]
+  derogations Derogation[]
+  eco         ECO?
 }
 
 model DFCHistory {
@@ -85,4 +91,58 @@ model DFCHistory {
 
   dfc  DFC  @relation(fields: [dfcId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id])
+}
+
+model DFCFile {
+  id           String   @id @default(cuid())
+  dfcId        String
+  originalName String
+  storedName   String
+  mimeType     String
+  sizeBytes    Int
+  relativePath String
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  dfc        DFC  @relation(fields: [dfcId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation("FileUploader", fields: [uploadedById], references: [id])
+
+  @@index([dfcId])
+  @@index([uploadedById])
+}
+
+model Derogation {
+  id                      String   @id @default(cuid())
+  dfcId                   String
+  numero                  String?
+  dateReception           DateTime?
+  dateApplicationEstimee  DateTime?
+  dateApplicationEffective DateTime?
+  commentaire             String?
+  createdById             String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  dfc       DFC  @relation(fields: [dfcId], references: [id], onDelete: Cascade)
+  createdBy User @relation("DerogationCreator", fields: [createdById], references: [id])
+
+  @@index([dfcId])
+  @@index([createdById])
+}
+
+model ECO {
+  id          String   @id @default(cuid())
+  dfcId       String   @unique
+  code        String
+  status      String   @default("DRAFT")
+  issuedAt    DateTime?
+  commentaire String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dfc       DFC  @relation(fields: [dfcId], references: [id], onDelete: Cascade)
+  createdBy User @relation("EcoCreator", fields: [createdById], references: [id])
+
+  @@index([createdById])
 }
