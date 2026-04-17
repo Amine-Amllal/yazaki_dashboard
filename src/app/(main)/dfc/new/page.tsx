@@ -23,12 +23,13 @@ interface RefData {
     projects: { id: string; name: string }[];
     families: { id: string; name: string }[];
     phases: { id: string; name: string }[];
+    users: { id: string; nom: string; prenom: string; matricule: string; fonction: string }[];
 }
 
 export default function NewDFCPage() {
     const router = useRouter();
     const { notify } = useFeedback();
-    const [refData, setRefData] = useState<RefData>({ projects: [], families: [], phases: [] });
+    const [refData, setRefData] = useState<RefData>({ projects: [], families: [], phases: [], users: [] });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [importSuccess, setImportSuccess] = useState(false);
@@ -62,6 +63,7 @@ export default function NewDFCPage() {
         dateApplicationEstimee: "",
         dateApplicationDerogation: "",
         commentaire: "",
+        assignedToId: "",
     });
 
     useEffect(() => {
@@ -258,6 +260,17 @@ export default function NewDFCPage() {
                                     <option value="T2">T2</option>
                                     <option value="T3">T3</option>
                                     <option value="MISTAKED">Mistaked</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Assigned responsible</label>
+                                <select name="assignedToId" className="form-select" value={form.assignedToId} onChange={handleChange}>
+                                    <option value="">Use creator as default</option>
+                                    {refData.users.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.prenom} {u.nom} ({u.matricule})
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

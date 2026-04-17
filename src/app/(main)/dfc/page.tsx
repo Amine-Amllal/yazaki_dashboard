@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { useFeedback } from "@/components/ui/feedback-provider";
 import { FiSearch, FiPlus, FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
@@ -20,13 +21,16 @@ interface DFC {
     family: { name: string };
     phase: { name: string };
     createdBy: { nom: string; prenom: string };
+    assignedTo: { nom: string; prenom: string } | null;
 }
 
 interface RefData {
     projects: { id: string; name: string }[];
+    users: { id: string; prenom: string; nom: string; matricule: string }[];
 }
 
 export default function DFCListPage() {
+    const searchParams = useSearchParams();
     const { confirm, notify } = useFeedback();
     const [dfcs, setDfcs] = useState<DFC[]>([]);
     const [total, setTotal] = useState(0);
@@ -37,7 +41,9 @@ export default function DFCListPage() {
     const [typeFilter, setTypeFilter] = useState("");
     const [faisabiliteFilter, setFaisabiliteFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
+    const [assignedToFilter, setAssignedToFilter] = useState(searchParams.get("assignedToId") || "");
     const [projects, setProjects] = useState<RefData["projects"]>([]);
+    const [users, setUsers] = useState<RefData["users"]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchDFCs = useCallback(async () => {
@@ -48,6 +54,7 @@ export default function DFCListPage() {
         if (typeFilter) params.set("typeDFC", typeFilter);
         if (faisabiliteFilter) params.set("faisabilite", faisabiliteFilter);
         if (statusFilter) params.set("status", statusFilter);
+        if (assignedToFilter) params.set("assignedToId", assignedToFilter);
 
         const res = await fetch(`/api/dfc?${params}`);
         const data = await res.json();
@@ -55,16 +62,20 @@ export default function DFCListPage() {
         setTotal(data.total);
         setTotalPages(data.totalPages);
         setLoading(false);
-    }, [page, search, projectFilter, typeFilter, faisabiliteFilter, statusFilter]);
+    }, [page, search, projectFilter, typeFilter, faisabiliteFilter, statusFilter, assignedToFilter]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchDFCs();
     }, [fetchDFCs]);
 
     useEffect(() => {
         fetch("/api/reference")
             .then((r) => r.json())
-            .then((data) => setProjects(data.projects));
+            .then((data) => {
+                setProjects(data.projects || []);
+                setUsers(data.users || []);
+            });
     }, []);
 
     const handleDelete = async (id: string) => {
@@ -136,6 +147,12 @@ export default function DFCListPage() {
                         <option value="open">Open</option>
                         <option value="closed">Closed</option>
                     </select>
+                    <select className="filter-select" value={assignedToFilter} onChange={(e) => { setAssignedToFilter(e.target.value); setPage(1); }}>
+                        <option value="">All responsibles</option>
+                        {users.map((u) => (
+                            <option key={u.id} value={u.id}>{u.prenom} {u.nom}</option>
+                        ))}
+                    </select>
                     <Link href="/dfc/new" className="btn btn-primary">
                         <FiPlus /> New DFC
                     </Link>
@@ -151,6 +168,7 @@ export default function DFCListPage() {
                                     <th>Description</th>
                                     <th>Project</th>
                                     <th>Family</th>
+                                    <th>Responsible</th>
                                     <th>Type</th>
                                     <th>Feasibility</th>
                                     <th>Received date</th>
@@ -162,14 +180,14 @@ export default function DFCListPage() {
                                 {loading ? (
                                     Array.from({ length: 5 }).map((_, i) => (
                                         <tr key={i}>
-                                            {Array.from({ length: 9 }).map((_, j) => (
+                                            {Array.from({ length: 10 }).map((_, j) => (
                                                 <td key={j}><div className="skeleton" style={{ height: 16, width: "80%" }} /></td>
                                             ))}
                                         </tr>
                                     ))
                                 ) : dfcs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} style={{ textAlign: "center", padding: 40 }}>
+                                        <td colSpan={10} style={{ textAlign: "center", padding: 40 }}>
                                             No DFC found
                                         </td>
                                     </tr>
@@ -183,6 +201,11 @@ export default function DFCListPage() {
                                             <td>{dfc.project.name}</td>
                                             <td style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                 {dfc.family.name}
+                                            </td>
+                                            <td>
+                                                {dfc.assignedTo
+                                                    ? `${dfc.assignedTo.prenom} ${dfc.assignedTo.nom}`
+                                                    : `${dfc.createdBy.prenom} ${dfc.createdBy.nom}`}
                                             </td>
                                             <td><span className="badge badge-neutral">{dfc.typeDFC}</span></td>
                                             <td>

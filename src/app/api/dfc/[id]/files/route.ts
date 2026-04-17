@@ -14,14 +14,15 @@ async function getAuthorizedDfc(
 ) {
     const dfc = await prisma.dFC.findUnique({
         where: { id },
-        select: { id: true, createdById: true },
+        select: { id: true, createdById: true, assignedToId: true },
     });
 
     if (!dfc) {
         return { dfc: null, error: NextResponse.json({ error: "DFC not found" }, { status: 404 }) };
     }
 
-    if (dfc.createdById !== userId && role !== "ADMIN") {
+    const canAccess = role === "ADMIN" || dfc.createdById === userId || dfc.assignedToId === userId;
+    if (!canAccess) {
         return {
             dfc: null,
             error: NextResponse.json(

@@ -39,6 +39,7 @@ export const createDFCSchema = z.object({
     dateApplicationEstimee: z.string().optional().nullable(),
     dateApplicationDerogation: z.string().optional().nullable(),
     commentaire: z.string().max(2000).optional().nullable(),
+    assignedToId: z.string().optional().nullable(),
 });
 
 export const updateDFCSchema = createDFCSchema.partial();

@@ -5,7 +5,7 @@ import { createDFCSchema } from "@/lib/validations";
 import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
-    const { session, error } = await getSessionOrFail();
+    const { error } = await getSessionOrFail();
     if (error) return error;
 
     const { searchParams } = new URL(request.url);
@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const typeDFC = searchParams.get("typeDFC") || "";
     const faisabilite = searchParams.get("faisabilite") || "";
     const status = searchParams.get("status") || "";
+    const assignedToId = searchParams.get("assignedToId") || "";
 
     const where: Record<string, unknown> = {};
 
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
     if (faisabilite) where.faisabilite = faisabilite;
     if (status === "open") where.dateReponse = null;
     if (status === "closed") where.dateReponse = { not: null };
+    if (assignedToId) where.assignedToId = assignedToId;
 
     const [dfcs, total] = await Promise.all([
         prisma.dFC.findMany({
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest) {
                 family: true,
                 phase: true,
                 createdBy: { select: { nom: true, prenom: true, matricule: true } },
+                assignedTo: { select: { id: true, nom: true, prenom: true, matricule: true } },
             },
             orderBy: { createdAt: "desc" },
             skip: (page - 1) * limit,
@@ -79,6 +82,15 @@ export async function POST(request: NextRequest) {
 
         const data = parsed.data;
         const userId = session.user.id;
+        const assignedToId = data.assignedToId || userId;
+
+        const assignedUser = await prisma.user.findFirst({
+            where: { id: assignedToId, active: true },
+            select: { id: true },
+        });
+        if (!assignedUser) {
+            return NextResponse.json({ error: "Assigned responsible not found or inactive" }, { status: 400 });
+        }
 
         const incomingDerogations = Array.isArray(body.derogations)
             ? body.derogations.filter((d: unknown) => d && typeof d === "object")
@@ -114,18 +126,29 @@ export async function POST(request: NextRequest) {
                         : null,
                     commentaire: data.commentaire || null,
                     createdById: userId,
+                    assignedToId: assignedToId,
+                    assignedAt: new Date(),
                     histories: {
-                        create: {
-                            userId,
-                            field: "STATUS",
-                            newValue: "CREATED",
-                        }
+                        create: [
+                            {
+                                userId,
+                                field: "STATUS",
+                                newValue: "CREATED",
+                            },
+                            {
+                                userId,
+                                field: "assignedToId",
+                                oldValue: null,
+                                newValue: assignedToId,
+                            },
+                        ],
                     }
                 },
                 include: {
                     project: true,
                     family: true,
                     phase: true,
+                    assignedTo: { select: { id: true, nom: true, prenom: true, matricule: true } },
                 },
             });
 

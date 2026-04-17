@@ -8,7 +8,6 @@ import {
     FiFileText,
     FiPlusCircle,
     FiUsers,
-    FiSettings,
     FiBarChart2,
     FiLogOut,
     FiDatabase,
@@ -35,6 +34,7 @@ export default function Sidebar({ collapsed, toggle }: SidebarProps) {
 
     const adminLinks = [
         { href: "/admin/dashboard", label: "Admin Dashboard", icon: <FiBarChart2 /> },
+        { href: "/admin/performance", label: "Responsible Performance", icon: <FiBarChart2 /> },
         { href: "/admin/users", label: "Users", icon: <FiUsers /> },
         { href: "/admin/settings", label: "Reference Data", icon: <FiDatabase /> },
         { href: "/admin/history", label: "Global History", icon: <FiClock /> },

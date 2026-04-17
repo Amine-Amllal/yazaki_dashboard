@@ -23,7 +23,7 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const { session, error } = await getSessionOrFail();
+    const { error } = await getSessionOrFail();
     if (error) return error;
 
     try {
@@ -34,13 +34,17 @@ export async function GET(
             return NextResponse.json({ error: "DFC not found" }, { status: 404 });
         }
 
-        const [project, family, phase, creator, derogationsRaw, eco, historiesRaw] = await Promise.all([
+        const [project, family, phase, creator, assignedUser, derogationsRaw, eco, historiesRaw] = await Promise.all([
             prisma.project.findUnique({ where: { id: baseDfc.projectId } }),
             prisma.family.findUnique({ where: { id: baseDfc.familyId } }),
             prisma.phase.findUnique({ where: { id: baseDfc.phaseId } }),
             prisma.user.findUnique({
                 where: { id: baseDfc.createdById },
                 select: { nom: true, prenom: true, matricule: true },
+            }),
+            prisma.user.findUnique({
+                where: { id: baseDfc.assignedToId || baseDfc.createdById },
+                select: { id: true, nom: true, prenom: true, matricule: true },
             }),
             prisma.derogation.findMany({
                 where: { dfcId: id },
@@ -100,6 +104,7 @@ export async function GET(
             family,
             phase,
             createdBy: creator,
+            assignedTo: assignedUser,
             derogations,
             eco,
             histories,
@@ -129,20 +134,23 @@ export async function PUT(
             }
 
             // Authorization: only the creator or an ADMIN can modify
-            if (currentDfc.createdById !== userId && session.user.role !== "ADMIN") {
+            if (currentDfc.createdById !== userId && currentDfc.assignedToId !== userId && session.user.role !== "ADMIN") {
                 throw new Error("FORBIDDEN");
             }
 
             // Track changes — proper null-safe comparison
             const fieldsToTrack = [
                 "description", "faisabilite", "typeDFC", "commentaire",
-                "projectId", "familyId", "phaseId", "numeroDerogation",
+                "projectId", "familyId", "phaseId", "numeroDerogation", "assignedToId",
             ];
 
             const historyEntries = [];
             for (const field of fieldsToTrack) {
                 const oldVal = (currentDfc as Record<string, unknown>)[field];
-                const newVal = body[field];
+                const incomingVal = body[field];
+                const newVal = field === "assignedToId" && (incomingVal === "" || incomingVal === null)
+                    ? null
+                    : incomingVal;
                 if (newVal !== undefined) {
                     const oldStr = oldVal != null ? String(oldVal) : null;
                     const newStr = newVal != null ? String(newVal) : null;
@@ -162,12 +170,16 @@ export async function PUT(
             const updateData: Record<string, unknown> = {};
             const allowedFields = [
                 "projectId", "familyId", "phaseId", "description",
-                "faisabilite", "typeDFC", "commentaire", "numeroDerogation",
+                "faisabilite", "typeDFC", "commentaire", "numeroDerogation", "assignedToId",
             ];
 
             for (const f of allowedFields) {
                 if (body[f] !== undefined) {
-                    updateData[f] = body[f];
+                    if (f === "assignedToId") {
+                        updateData[f] = body[f] ? String(body[f]) : null;
+                    } else {
+                        updateData[f] = body[f];
+                    }
                 }
             }
 
@@ -183,6 +195,21 @@ export async function PUT(
 
             if (body.delaiReponse !== undefined) {
                 updateData.delaiReponse = body.delaiReponse ? parseInt(body.delaiReponse) : null;
+            }
+
+            if (body.assignedToId !== undefined) {
+                if (body.assignedToId) {
+                    const assigned = await tx.user.findFirst({
+                        where: { id: String(body.assignedToId), active: true },
+                        select: { id: true },
+                    });
+                    if (!assigned) {
+                        throw new Error("INVALID_ASSIGNED_USER");
+                    }
+                    updateData.assignedAt = new Date();
+                } else {
+                    updateData.assignedAt = null;
+                }
             }
 
             const incomingDerogations = Array.isArray(body.derogations)
@@ -285,6 +312,9 @@ export async function PUT(
         }
         if (err instanceof Error && err.message === "FORBIDDEN") {
             return NextResponse.json({ error: "You are not allowed to modify this DFC" }, { status: 403 });
+        }
+        if (err instanceof Error && err.message === "INVALID_ASSIGNED_USER") {
+            return NextResponse.json({ error: "Assigned responsible not found or inactive" }, { status: 400 });
         }
         return handleApiError(err, "Failed to update DFC");
     }

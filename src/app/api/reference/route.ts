@@ -7,13 +7,18 @@ export async function GET() {
     const { error } = await getSessionOrFail();
     if (error) return error;
 
-    const [projects, families, phases] = await Promise.all([
+    const [projects, families, phases, users] = await Promise.all([
         prisma.project.findMany({ orderBy: { name: "asc" } }),
         prisma.family.findMany({ orderBy: { name: "asc" } }),
         prisma.phase.findMany({ orderBy: { name: "asc" } }),
+        prisma.user.findMany({
+            where: { active: true },
+            orderBy: { nom: "asc" },
+            select: { id: true, nom: true, prenom: true, matricule: true, fonction: true },
+        }),
     ]);
 
-    return NextResponse.json({ projects, families, phases });
+    return NextResponse.json({ projects, families, phases, users });
 }
 
 export async function POST(request: NextRequest) {

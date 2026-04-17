@@ -31,6 +31,7 @@ interface DFCDetail {
     family: { id: string; name: string };
     phase: { id: string; name: string };
     createdBy: { nom: string; prenom: string; matricule: string };
+    assignedTo: { id: string; nom: string; prenom: string; matricule: string } | null;
     derogations?: Array<{
         id: string;
         numero: string | null;
@@ -61,6 +62,7 @@ interface RefData {
     projects: { id: string; name: string }[];
     families: { id: string; name: string }[];
     phases: { id: string; name: string }[];
+    users: { id: string; nom: string; prenom: string; matricule: string; fonction: string }[];
 }
 
 export default function DFCDetailPage() {
@@ -73,7 +75,7 @@ export default function DFCDetailPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [refData, setRefData] = useState<RefData>({ projects: [], families: [], phases: [] });
+    const [refData, setRefData] = useState<RefData>({ projects: [], families: [], phases: [], users: [] });
     const [form, setForm] = useState<Record<string, string>>({});
 
     useEffect(() => {
@@ -136,6 +138,7 @@ export default function DFCDetailPage() {
                     dateApplicationEstimee: dfcData.dateApplicationEstimee?.split("T")[0] || "",
                     dateApplicationDerogation: dfcData.dateApplicationDerogation?.split("T")[0] || "",
                     commentaire: dfcData.commentaire || "",
+                    assignedToId: dfcData.assignedTo?.id || "",
                 });
             } catch {
                 setLoadError("Connection error while loading DFC details");
@@ -185,6 +188,7 @@ export default function DFCDetailPage() {
         familyId: "Family",
         phaseId: "Phase",
         numeroDerogation: "Waiver number",
+        assignedToId: "Assigned responsible",
     };
 
     if (loading) {
@@ -259,6 +263,17 @@ export default function DFCDetailPage() {
                                         <option value="MISTAKED">Mistaked</option>
                                     </select>
                                 </div>
+                                <div className="form-group">
+                                    <label className="form-label">Assigned responsible</label>
+                                    <select name="assignedToId" className="form-select" value={form.assignedToId || ""} onChange={handleChange}>
+                                        <option value="">None</option>
+                                        {refData.users.map((u) => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.prenom} {u.nom} ({u.matricule})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Description</label>
@@ -312,6 +327,7 @@ export default function DFCDetailPage() {
                                     ["Phase", dfc.phase.name],
                                     ["Type", dfc.typeDFC],
                                     ["Created by", `${dfc.createdBy.prenom} ${dfc.createdBy.nom}`],
+                                    ["Assigned responsible", dfc.assignedTo ? `${dfc.assignedTo.prenom} ${dfc.assignedTo.nom}` : "—"],
                                     ["Received date", formatDate(dfc.dateReception)],
                                     ["Response date", dfc.dateReponse ? formatDate(dfc.dateReponse) : "—"],
                                     ["Lead time", dfc.delaiReponse ? `${dfc.delaiReponse} days` : "—"],

@@ -2,6 +2,80 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionOrFail } from "@/lib/api-helpers";
 
+type SortDirection = "asc" | "desc";
+
+type ResponsablePerformance = {
+    responsableId: string;
+    name: string;
+    matricule: string;
+    fonction: string;
+    totalDFC: number;
+    openDFC: number;
+    closedDFC: number;
+    inProgressDFC: number;
+    treatedCount: number;
+    tauxFaisabilite: number;
+    responseRate: number;
+    delaiMoyen: number;
+    performanceScore: number;
+    difficulty: "OK" | "WARNING" | "CRITICAL";
+};
+
+function round(value: number, precision = 1) {
+    const factor = 10 ** precision;
+    return Math.round(value * factor) / factor;
+}
+
+function buildDifficultyLevel(
+    delaiMoyen: number,
+    tauxFaisabilite: number,
+    openDFC: number,
+    thresholdDelai: number,
+    thresholdBacklog: number
+): "OK" | "WARNING" | "CRITICAL" {
+    if (delaiMoyen > thresholdDelai + 7 || tauxFaisabilite < 50 || openDFC > thresholdBacklog + 10) {
+        return "CRITICAL";
+    }
+    if (delaiMoyen > thresholdDelai || tauxFaisabilite < 70 || openDFC > thresholdBacklog) {
+        return "WARNING";
+    }
+    return "OK";
+}
+
+function sortResponsables(
+    data: ResponsablePerformance[],
+    sortBy: string,
+    order: SortDirection
+): ResponsablePerformance[] {
+    const direction = order === "asc" ? 1 : -1;
+
+    const getter = (item: ResponsablePerformance) => {
+        if (sortBy === "totalDFC") return item.totalDFC;
+        if (sortBy === "openDFC") return item.openDFC;
+        if (sortBy === "closedDFC") return item.closedDFC;
+        if (sortBy === "inProgressDFC") return item.inProgressDFC;
+        if (sortBy === "treatedCount") return item.treatedCount;
+        if (sortBy === "tauxFaisabilite") return item.tauxFaisabilite;
+        if (sortBy === "responseRate") return item.responseRate;
+        if (sortBy === "delaiMoyen") return item.delaiMoyen;
+        return item.performanceScore;
+    };
+
+    return [...data].sort((a, b) => {
+        const av = getter(a);
+        const bv = getter(b);
+
+        if (av === bv) {
+            if (a.treatedCount !== b.treatedCount) {
+                return (a.treatedCount - b.treatedCount) * direction;
+            }
+            return a.name.localeCompare(b.name);
+        }
+
+        return (av - bv) * direction;
+    });
+}
+
 export async function GET(request: NextRequest) {
     const { error } = await getSessionOrFail();
     if (error) return error;
@@ -16,6 +90,10 @@ export async function GET(request: NextRequest) {
     const statut = searchParams.get("statut"); // open | closed
     const responsableId = searchParams.get("responsableId");
     const faisabilite = searchParams.get("faisabilite"); // OUI | NON | EN_COURS | A_CLARIFIER
+    const sortBy = searchParams.get("sortBy") || "performanceScore";
+    const order = searchParams.get("order") === "asc" ? "asc" : "desc";
+    const thresholdDelai = Number(searchParams.get("thresholdDelai") || 14);
+    const thresholdBacklog = Number(searchParams.get("thresholdBacklog") || 20);
 
     // Build where clause from filters
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,7 +113,7 @@ export async function GET(request: NextRequest) {
     if (typeDFC) where.typeDFC = typeDFC;
     if (statut === "open") where.dateReponse = null;
     if (statut === "closed") where.dateReponse = { not: null };
-    if (responsableId) where.createdById = responsableId;
+    if (responsableId) where.assignedToId = responsableId;
     if (faisabilite) where.faisabilite = faisabilite;
 
     const [
@@ -47,6 +125,7 @@ export async function GET(request: NextRequest) {
         dfcByFaisabilite,
         recentDFCs,
         allDFCs,
+        allDfcsForPerformance,
     ] = await Promise.all([
         prisma.dFC.count({ where }),
         prisma.dFC.count({ where: { ...where, dateReponse: null } }),
@@ -58,11 +137,26 @@ export async function GET(request: NextRequest) {
             where,
             take: 5,
             orderBy: { createdAt: "desc" },
-            include: { project: true, family: true },
+            include: {
+                project: true,
+                family: true,
+                assignedTo: { select: { id: true, nom: true, prenom: true, matricule: true } },
+            },
         }),
         prisma.dFC.findMany({
             where: { ...where, delaiReponse: { not: null } },
             select: { delaiReponse: true },
+        }),
+        prisma.dFC.findMany({
+            where,
+            select: {
+                id: true,
+                createdById: true,
+                assignedToId: true,
+                dateReponse: true,
+                delaiReponse: true,
+                faisabilite: true,
+            },
         }),
     ]);
 
@@ -125,11 +219,114 @@ export async function GET(request: NextRequest) {
         ...data,
     }));
 
+    // Compute performance by assigned responsible
+    const responsibleIds = Array.from(new Set(
+        allDfcsForPerformance
+            .map((dfc) => dfc.assignedToId || dfc.createdById)
+            .filter((id): id is string => Boolean(id))
+    ));
+
+    const users = responsibleIds.length > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: responsibleIds } },
+            select: { id: true, nom: true, prenom: true, matricule: true, fonction: true },
+        })
+        : [];
+
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    const accumulator = new Map<string, {
+        totalDFC: number;
+        openDFC: number;
+        closedDFC: number;
+        inProgressDFC: number;
+        treatedCount: number;
+        feasibleOui: number;
+        feasibleNon: number;
+        delaySum: number;
+        delayCount: number;
+    }>();
+
+    for (const dfc of allDfcsForPerformance) {
+        const rid = dfc.assignedToId || dfc.createdById;
+        if (!rid) continue;
+
+        if (!accumulator.has(rid)) {
+            accumulator.set(rid, {
+                totalDFC: 0,
+                openDFC: 0,
+                closedDFC: 0,
+                inProgressDFC: 0,
+                treatedCount: 0,
+                feasibleOui: 0,
+                feasibleNon: 0,
+                delaySum: 0,
+                delayCount: 0,
+            });
+        }
+
+        const current = accumulator.get(rid)!;
+        current.totalDFC += 1;
+
+        if (dfc.dateReponse) {
+            current.closedDFC += 1;
+            current.treatedCount += 1;
+        } else {
+            current.openDFC += 1;
+        }
+
+        if (dfc.faisabilite === "EN_COURS" || dfc.faisabilite === "A_CLARIFIER") {
+            current.inProgressDFC += 1;
+        }
+
+        if (dfc.faisabilite === "OUI") {
+            current.feasibleOui += 1;
+        }
+        if (dfc.faisabilite === "NON") {
+            current.feasibleNon += 1;
+        }
+
+        if (typeof dfc.delaiReponse === "number") {
+            current.delaySum += dfc.delaiReponse;
+            current.delayCount += 1;
+        }
+    }
+
+    const responsablesPerformanceRaw: ResponsablePerformance[] = Array.from(accumulator.entries())
+        .map(([rid, metrics]) => {
+            const user = userMap.get(rid);
+            const denom = metrics.feasibleOui + metrics.feasibleNon;
+            const tauxFaisabilite = denom > 0 ? round((metrics.feasibleOui / denom) * 100) : 0;
+            const responseRate = metrics.totalDFC > 0 ? round((metrics.closedDFC / metrics.totalDFC) * 100) : 0;
+            const delaiMoyen = metrics.delayCount > 0 ? round(metrics.delaySum / metrics.delayCount) : 0;
+
+            const delayScore = Math.max(0, 100 - delaiMoyen * 3);
+            const performanceScore = round((responseRate * 0.45) + (tauxFaisabilite * 0.35) + (delayScore * 0.2));
+
+            return {
+                responsableId: rid,
+                name: user ? `${user.prenom} ${user.nom}` : "Unknown user",
+                matricule: user?.matricule || "N/A",
+                fonction: user?.fonction || "UNKNOWN",
+                totalDFC: metrics.totalDFC,
+                openDFC: metrics.openDFC,
+                closedDFC: metrics.closedDFC,
+                inProgressDFC: metrics.inProgressDFC,
+                treatedCount: metrics.treatedCount,
+                tauxFaisabilite,
+                responseRate,
+                delaiMoyen,
+                performanceScore,
+                difficulty: buildDifficultyLevel(delaiMoyen, tauxFaisabilite, metrics.openDFC, thresholdDelai, thresholdBacklog),
+            };
+        });
+
+    const responsablesPerformance = sortResponsables(responsablesPerformanceRaw, sortBy, order as SortDirection);
+
     // Fetch filter options (projects, families, users)
     const [allProjects, allFamilies, allUsers] = await Promise.all([
         prisma.project.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
         prisma.family.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-        prisma.user.findMany({ orderBy: { nom: "asc" }, select: { id: true, nom: true, prenom: true } }),
+        prisma.user.findMany({ where: { active: true }, orderBy: { nom: "asc" }, select: { id: true, nom: true, prenom: true } }),
     ]);
 
     return NextResponse.json({
@@ -142,6 +339,7 @@ export async function GET(request: NextRequest) {
         dfcByFaisabilite: dfcByFaisabiliteNamed,
         monthlyData,
         recentDFCs,
+        responsablesPerformance,
         filterOptions: {
             projects: allProjects,
             families: allFamilies,

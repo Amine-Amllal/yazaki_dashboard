@@ -1,0 +1,17 @@
+{
+  "db_path": "C:\\Users\\saada\\Downloads\\new yazaki\\yazaki_dashboard\\prisma\\dev.db",
+  "signature": "ebd16c35bd384a779cb2793150aadc7e6979d0223990758ce376389ba0aa32ad",
+  "saved_at": "2026-04-16T23:35:10.469817",
+  "doc_count": 15,
+  "tables": [
+    "Project",
+    "Family",
+    "Phase",
+    "User",
+    "DFC",
+    "DFCHistory",
+    "DFCFile",
+    "Derogation",
+    "ECO"
+  ]
+}

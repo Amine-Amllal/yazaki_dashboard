@@ -22,6 +22,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   dfcs       DFC[]
+  assignedDfcs DFC[] @relation("DfcAssignedUser")
   histories  DFCHistory[]
   files      DFCFile[] @relation("FileUploader")
   derogations Derogation[] @relation("DerogationCreator")
@@ -67,6 +68,8 @@ model DFC {
   dateApplicationDerogation DateTime?
   commentaire               String?
   createdById               String
+  assignedToId              String?
+  assignedAt                DateTime?
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
@@ -74,10 +77,15 @@ model DFC {
   family    Family       @relation(fields: [familyId], references: [id])
   phase     Phase        @relation(fields: [phaseId], references: [id])
   createdBy User         @relation(fields: [createdById], references: [id])
+  assignedTo User?       @relation("DfcAssignedUser", fields: [assignedToId], references: [id])
   histories DFCHistory[]
   files     DFCFile[]
   derogations Derogation[]
   eco         ECO?
+
+  @@index([assignedToId])
+  @@index([assignedToId, faisabilite])
+  @@index([assignedToId, dateReponse])
 }
 
 model DFCHistory {

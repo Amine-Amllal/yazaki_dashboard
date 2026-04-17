@@ -146,6 +146,8 @@ async function main() {
                     familyId: family.id,
                     phaseId: phase.id,
                     createdById: admin.id,
+                    assignedToId: admin.id,
+                    assignedAt: new Date(),
                     ...sampleDFCs[i],
                 },
             });
