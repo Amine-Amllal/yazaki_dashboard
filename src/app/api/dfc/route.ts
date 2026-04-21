@@ -3,10 +3,13 @@ import prisma from "@/lib/prisma";
 import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
 import { createDFCSchema } from "@/lib/validations";
 import { applyRateLimit, RATE_LIMIT_PRESETS } from "@/lib/rate-limit";
+import { computeSlaForDfc, createOverdueNotification, syncOverdueDfcsAndNotify } from "@/lib/sla";
 
 export async function GET(request: NextRequest) {
     const { error } = await getSessionOrFail();
     if (error) return error;
+
+    await syncOverdueDfcsAndNotify();
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -17,6 +20,7 @@ export async function GET(request: NextRequest) {
     const faisabilite = searchParams.get("faisabilite") || "";
     const status = searchParams.get("status") || "";
     const assignedToId = searchParams.get("assignedToId") || "";
+    const overdueOnly = searchParams.get("overdueOnly") || "";
 
     const where: Record<string, unknown> = {};
 
@@ -34,6 +38,10 @@ export async function GET(request: NextRequest) {
     if (status === "open") where.dateReponse = null;
     if (status === "closed") where.dateReponse = { not: null };
     if (assignedToId) where.assignedToId = assignedToId;
+    if (overdueOnly === "true") {
+        where.isOverdue = true;
+        where.dateReponse = null;
+    }
 
     const [dfcs, total] = await Promise.all([
         prisma.dFC.findMany({
@@ -83,6 +91,14 @@ export async function POST(request: NextRequest) {
         const data = parsed.data;
         const userId = session.user.id;
         const assignedToId = data.assignedToId || userId;
+        const dateReception = new Date(data.dateReception);
+        const dateReponse = data.dateReponse ? new Date(data.dateReponse) : null;
+        const sla = await computeSlaForDfc({
+            projectId: data.projectId,
+            typeDFC: data.typeDFC || "T1",
+            dateReception,
+            dateReponse,
+        });
 
         const assignedUser = await prisma.user.findFirst({
             where: { id: assignedToId, active: true },
@@ -109,11 +125,11 @@ export async function POST(request: NextRequest) {
                     familyId: data.familyId,
                     phaseId: data.phaseId,
                     description: data.description,
-                    dateReception: new Date(data.dateReception),
+                    dateReception,
                     faisabilite: data.faisabilite || "EN_COURS",
-                    dateReponse: data.dateReponse ? new Date(data.dateReponse) : null,
+                    dateReponse,
                     typeDFC: data.typeDFC || "T1",
-                    delaiReponse: data.delaiReponse ? parseInt(String(data.delaiReponse)) : null,
+                    delaiReponse: sla.delaiReponse,
                     dateReceptionDerogation: data.dateReceptionDerogation
                         ? new Date(data.dateReceptionDerogation)
                         : null,
@@ -128,6 +144,10 @@ export async function POST(request: NextRequest) {
                     createdById: userId,
                     assignedToId: assignedToId,
                     assignedAt: new Date(),
+                    slaDelayDays: sla.slaDelayDays,
+                    slaDueDate: sla.slaDueDate,
+                    isOverdue: sla.isOverdue,
+                    overdueSince: sla.overdueSince,
                     histories: {
                         create: [
                             {
@@ -201,6 +221,15 @@ export async function POST(request: NextRequest) {
 
             return createdDfc;
         });
+
+        if (sla.isOverdue && assignedToId) {
+            await createOverdueNotification({
+                dfcId: dfc.id,
+                numero: dfc.numero,
+                projectName: dfc.project.name,
+                userId: assignedToId,
+            });
+        }
 
         return NextResponse.json(dfc, { status: 201 });
     } catch (err) {

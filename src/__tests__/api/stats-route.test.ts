@@ -18,15 +18,24 @@ const prismaMock = {
 };
 
 const getSessionOrFailMock = vi.fn();
+const syncOverdueDfcsAndNotifyMock = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({ default: prismaMock }));
 vi.mock("@/lib/api-helpers", () => ({
     getSessionOrFail: getSessionOrFailMock,
 }));
+vi.mock("@/lib/sla", () => ({
+    syncOverdueDfcsAndNotify: syncOverdueDfcsAndNotifyMock,
+}));
 
 describe("/api/stats route", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        syncOverdueDfcsAndNotifyMock.mockResolvedValue({
+            markedOverdue: 0,
+            notificationsCreated: 0,
+            recovered: 0,
+        });
         getSessionOrFailMock.mockResolvedValue({
             session: { user: { id: "u-admin", role: "ADMIN" } },
             error: null,
@@ -57,7 +66,8 @@ describe("/api/stats route", () => {
             .mockResolvedValueOnce([
                 { faisabilite: "OUI", _count: { id: 1 } },
                 { faisabilite: "NON", _count: { id: 1 } },
-            ]);
+            ])
+            .mockResolvedValueOnce([]);
 
         prismaMock.dFC.findMany
             .mockResolvedValueOnce([
@@ -95,7 +105,8 @@ describe("/api/stats route", () => {
             .mockResolvedValueOnce([
                 { dateReception: new Date("2026-01-01"), dateReponse: new Date("2026-01-04") },
                 { dateReception: new Date("2026-01-10"), dateReponse: null },
-            ]);
+            ])
+            .mockResolvedValueOnce([]);
 
         prismaMock.project.findMany
             .mockResolvedValueOnce([{ id: "p1", name: "Project A" }])

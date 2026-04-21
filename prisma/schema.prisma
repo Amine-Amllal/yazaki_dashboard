@@ -27,6 +27,7 @@ model User {
   files      DFCFile[] @relation("FileUploader")
   derogations Derogation[] @relation("DerogationCreator")
   ecos        ECO[] @relation("EcoCreator")
+  notifications Notification[]
 }
 
 model Project {
@@ -34,6 +35,7 @@ model Project {
   name      String   @unique
   createdAt DateTime @default(now())
   dfcs      DFC[]
+  slaRules  SlaRule[]
 }
 
 model Family {
@@ -70,6 +72,10 @@ model DFC {
   createdById               String
   assignedToId              String?
   assignedAt                DateTime?
+  slaDueDate                DateTime?
+  slaDelayDays              Int?
+  isOverdue                 Boolean  @default(false)
+  overdueSince              DateTime?
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
@@ -82,10 +88,45 @@ model DFC {
   files     DFCFile[]
   derogations Derogation[]
   eco         ECO?
+  notifications Notification[]
 
   @@index([assignedToId])
   @@index([assignedToId, faisabilite])
   @@index([assignedToId, dateReponse])
+  @@index([projectId, slaDueDate])
+  @@index([isOverdue, slaDueDate])
+}
+
+model SlaRule {
+  id        String   @id @default(cuid())
+  projectId String
+  typeDFC   String?
+  delayDays Int      @default(3)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, typeDFC])
+  @@index([projectId, active])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  dfcId     String?
+  type      String
+  message   String
+  dedupeKey String?  @unique
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dfc  DFC? @relation(fields: [dfcId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([dfcId])
 }
 
 model DFCHistory {

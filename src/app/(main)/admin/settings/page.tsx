@@ -18,6 +18,15 @@ interface RefData {
     phases: RefItem[];
 }
 
+interface SlaRule {
+    id: string;
+    projectId: string;
+    typeDFC: string | null;
+    delayDays: number;
+    active: boolean;
+    project: { id: string; name: string };
+}
+
 export default function AdminSettingsPage() {
     const { notify, confirm, prompt } = useFeedback();
     const [data, setData] = useState<RefData>({ projects: [], families: [], phases: [] });
@@ -25,6 +34,10 @@ export default function AdminSettingsPage() {
     const [newItem, setNewItem] = useState({ type: "", name: "" });
     const [saving, setSaving] = useState(false);
     const [openMenu, setOpenMenu] = useState<{ type: string, id: string } | null>(null);
+    const [slaRules, setSlaRules] = useState<SlaRule[]>([]);
+    const [slaForm, setSlaForm] = useState({ projectId: "", typeDFC: "", delayDays: "3", active: true });
+    const [savingSla, setSavingSla] = useState(false);
+    const [editingSlaId, setEditingSlaId] = useState<string | null>(null);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -34,10 +47,22 @@ export default function AdminSettingsPage() {
     }, []);
 
     const fetchData = async () => {
-        const res = await fetch("/api/reference");
-        const d = await res.json();
-        setData(d);
-        setLoading(false);
+        try {
+            const [refRes, slaRes] = await Promise.all([
+                fetch("/api/reference"),
+                fetch("/api/sla-rules"),
+            ]);
+
+            const refData = await refRes.json();
+            setData(refData);
+
+            if (slaRes.ok) {
+                const slaData = await slaRes.json();
+                setSlaRules(Array.isArray(slaData.rules) ? slaData.rules : []);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
@@ -120,6 +145,82 @@ export default function AdminSettingsPage() {
             }
             notify.success("Item deleted successfully");
             fetchData();
+        } catch {
+            notify.error("Connection error");
+        }
+    };
+
+    const handleSaveSlaRule = async () => {
+        if (!slaForm.projectId) {
+            notify.error("Project is required");
+            return;
+        }
+
+        const delayDays = Number(slaForm.delayDays);
+        if (!Number.isInteger(delayDays) || delayDays < 1 || delayDays > 30) {
+            notify.error("Delay must be an integer between 1 and 30");
+            return;
+        }
+
+        setSavingSla(true);
+        try {
+            const res = await fetch("/api/sla-rules", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: editingSlaId || undefined,
+                    projectId: slaForm.projectId,
+                    typeDFC: slaForm.typeDFC || null,
+                    delayDays,
+                    active: slaForm.active,
+                }),
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                notify.error(err.error || "Failed to save SLA rule");
+                return;
+            }
+
+            notify.success(editingSlaId ? "SLA rule updated" : "SLA rule saved");
+            await fetchData();
+            setEditingSlaId(null);
+            setSlaForm({ projectId: "", typeDFC: "", delayDays: "3", active: true });
+        } catch {
+            notify.error("Connection error");
+        } finally {
+            setSavingSla(false);
+        }
+    };
+
+    const handleDeleteSlaRule = async (rule: SlaRule) => {
+        const accepted = await confirm({
+            title: "Delete SLA rule",
+            message: `Delete SLA rule for ${rule.project.name} (${rule.typeDFC || "All types"})?`,
+            confirmText: "Delete",
+            cancelText: "Cancel",
+            danger: true,
+        });
+        if (!accepted) return;
+
+        try {
+            const res = await fetch(`/api/sla-rules?id=${rule.id}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                notify.error(err.error || "Failed to delete SLA rule");
+                return;
+            }
+
+            if (editingSlaId === rule.id) {
+                setEditingSlaId(null);
+                setSlaForm({ projectId: "", typeDFC: "", delayDays: "3", active: true });
+            }
+
+            notify.success("SLA rule deleted");
+            await fetchData();
         } catch {
             notify.error("Connection error");
         }
@@ -273,6 +374,144 @@ export default function AdminSettingsPage() {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                <div className="form-card" style={{ marginTop: 20 }}>
+                    <h3 className="form-card-title">SLA rules by project</h3>
+                    {editingSlaId && (
+                        <div style={{ marginBottom: 10, fontSize: 13, color: "var(--text-secondary)" }}>
+                            Editing rule. Click Save to update or Cancel to discard.
+                        </div>
+                    )}
+                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 10, alignItems: "end", marginBottom: 16 }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Project</label>
+                            <select
+                                className="form-select"
+                                value={slaForm.projectId}
+                                onChange={(e) => setSlaForm((prev) => ({ ...prev, projectId: e.target.value }))}
+                            >
+                                <option value="">Select a project</option>
+                                {data.projects.map((project) => (
+                                    <option key={project.id} value={project.id}>{project.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">DFC type</label>
+                            <select
+                                className="form-select"
+                                value={slaForm.typeDFC}
+                                onChange={(e) => setSlaForm((prev) => ({ ...prev, typeDFC: e.target.value }))}
+                            >
+                                <option value="">All types</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="MISTAKED">Mistaked</option>
+                            </select>
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label">Delay (days)</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={30}
+                                className="form-input"
+                                value={slaForm.delayDays}
+                                onChange={(e) => setSlaForm((prev) => ({ ...prev, delayDays: e.target.value }))}
+                            />
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                            {editingSlaId && (
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setEditingSlaId(null);
+                                        setSlaForm({ projectId: "", typeDFC: "", delayDays: "3", active: true });
+                                    }}
+                                    disabled={savingSla}
+                                    type="button"
+                                >
+                                    Cancel
+                                </button>
+                            )}
+                            <button className="btn btn-primary" onClick={handleSaveSlaRule} disabled={savingSla} type="button">
+                                {savingSla ? "Saving..." : editingSlaId ? "Update" : "Save"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                        <input
+                            type="checkbox"
+                            checked={slaForm.active}
+                            onChange={(e) => setSlaForm((prev) => ({ ...prev, active: e.target.checked }))}
+                        />
+                        <span style={{ fontSize: 14 }}>Rule active</span>
+                    </label>
+
+                    <div className="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>DFC type</th>
+                                    <th>Delay (days)</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {slaRules.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} style={{ textAlign: "center", padding: 18 }}>
+                                            No SLA rules configured
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    slaRules.map((rule) => (
+                                        <tr key={rule.id}>
+                                            <td>{rule.project.name}</td>
+                                            <td>{rule.typeDFC || "All"}</td>
+                                            <td>{rule.delayDays}</td>
+                                            <td>
+                                                <span className={`badge ${rule.active ? "badge-success" : "badge-neutral"}`}>
+                                                    {rule.active ? "Active" : "Inactive"}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: "flex", gap: 8 }}>
+                                                    <button
+                                                        className="btn btn-secondary btn-sm"
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setEditingSlaId(rule.id);
+                                                            setSlaForm({
+                                                                projectId: rule.projectId,
+                                                                typeDFC: rule.typeDFC || "",
+                                                                delayDays: String(rule.delayDays),
+                                                                active: rule.active,
+                                                            });
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-secondary btn-sm"
+                                                        type="button"
+                                                        onClick={() => handleDeleteSlaRule(rule)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </>

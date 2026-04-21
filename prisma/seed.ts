@@ -48,6 +48,30 @@ async function main() {
         });
     }
 
+    const renaultProject = await prisma.project.findFirst({ where: { name: "Renault" } });
+    if (renaultProject) {
+        const existingRule = await prisma.slaRule.findFirst({
+            where: { projectId: renaultProject.id, typeDFC: null },
+            select: { id: true },
+        });
+
+        if (existingRule) {
+            await prisma.slaRule.update({
+                where: { id: existingRule.id },
+                data: { delayDays: 3, active: true },
+            });
+        } else {
+            await prisma.slaRule.create({
+                data: {
+                    projectId: renaultProject.id,
+                    typeDFC: null,
+                    delayDays: 3,
+                    active: true,
+                },
+            });
+        }
+    }
+
     const families = [
         "CABLAGE PORTE AR D",
         "CABLAGE PORTE AR G",

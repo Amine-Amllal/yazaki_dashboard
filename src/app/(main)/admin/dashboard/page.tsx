@@ -16,6 +16,16 @@ interface Stats {
     dfcOuverts: number;
     dfcFermes: number;
     delaiMoyen: number;
+    overdueCount: number;
+    overdueRenault: {
+        id: string;
+        numero: number;
+        dateReception: string;
+        overdueSince: string | null;
+        project: { name: string };
+        assignedTo: { prenom: string; nom: string; matricule: string } | null;
+        createdBy: { prenom: string; nom: string; matricule: string };
+    }[];
     dfcByType: { name: string; count: number }[];
     dfcByProject: { name: string; count: number }[];
     dfcByFaisabilite: { name: string; count: number }[];
@@ -32,6 +42,7 @@ const emptyFilters: FilterValues = {
     statut: "",
     responsableId: "",
     faisabilite: "",
+    overdueOnly: "",
 };
 
 export default function AdminDashboardPage() {
@@ -135,6 +146,13 @@ export default function AdminDashboardPage() {
                             {stats.totalDFC > 0 ? Math.round(stats.dfcFermes / stats.totalDFC * 100) : 0}%
                         </div>
                     </div>
+                    <div className="stat-card">
+                        <div className="stat-card-header">
+                            <div className="stat-card-icon red"><FiAlertCircle /></div>
+                        </div>
+                        <div className="stat-card-label">Overdue DFCs</div>
+                        <div className="stat-card-value">{stats.overdueCount}</div>
+                    </div>
                 </div>
 
                 {/* Charts */}
@@ -207,6 +225,50 @@ export default function AdminDashboardPage() {
                                 <Legend />
                             </PieChart>
                         </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="table-card" style={{ marginTop: 20 }}>
+                    <div className="table-header">
+                        <h3 className="table-title">Renault overdue DFCs</h3>
+                    </div>
+                    <div className="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Project</th>
+                                    <th>Received date</th>
+                                    <th>Responsible</th>
+                                    <th>Overdue since</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.overdueRenault.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} style={{ textAlign: "center", padding: 24 }}>
+                                            No Renault overdue DFCs
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    stats.overdueRenault.map((item) => {
+                                        const responsible = item.assignedTo
+                                            ? `${item.assignedTo.prenom} ${item.assignedTo.nom}`
+                                            : `${item.createdBy.prenom} ${item.createdBy.nom}`;
+
+                                        return (
+                                            <tr key={item.id}>
+                                                <td><strong>{item.numero}</strong></td>
+                                                <td>{item.project.name}</td>
+                                                <td>{new Date(item.dateReception).toLocaleDateString()}</td>
+                                                <td>{responsible}</td>
+                                                <td>{item.overdueSince ? new Date(item.overdueSince).toLocaleDateString() : "-"}</td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

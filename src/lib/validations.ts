@@ -80,6 +80,18 @@ export const updateReferenceSchema = z.object({
     name: z.string().min(1, "Name is required").max(200),
 });
 
+export const upsertSlaRuleSchema = z.object({
+    id: z.string().optional(),
+    projectId: z.string().min(1, "Project is required"),
+    typeDFC: z.enum(["T1", "T2", "T3", "MISTAKED"]).optional().nullable(),
+    delayDays: z.number().int().min(1, "Delay must be at least 1 day").max(30, "Delay too large"),
+    active: z.boolean().default(true),
+});
+
+export const markNotificationReadSchema = z.object({
+    read: z.boolean().default(true),
+});
+
 export const feasibilityFileMetadataSchema = z.object({
     dfcId: z.string().min(1),
     originalName: z.string().min(1).max(255),

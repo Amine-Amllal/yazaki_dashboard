@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionOrFail, handleApiError } from "@/lib/api-helpers";
 import { deleteDfcFeasibilityDirectory, deleteFeasibilityFile } from "@/lib/storage/dfc-files";
+import { computeSlaForDfc, createOverdueNotification } from "@/lib/sla";
 
 type DerogationPayload = {
     id?: string;
@@ -124,6 +125,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const userId = session.user.id;
+    let pendingNotification: { userId: string; dfcId: string; numero: number; projectName: string } | null = null;
 
     try {
         // Use a transaction to ensure atomicity of update + history
@@ -193,10 +195,6 @@ export async function PUT(
                 }
             }
 
-            if (body.delaiReponse !== undefined) {
-                updateData.delaiReponse = body.delaiReponse ? parseInt(body.delaiReponse) : null;
-            }
-
             if (body.assignedToId !== undefined) {
                 if (body.assignedToId) {
                     const assigned = await tx.user.findFirst({
@@ -211,6 +209,29 @@ export async function PUT(
                     updateData.assignedAt = null;
                 }
             }
+
+            const nextProjectId = (updateData.projectId as string | undefined) ?? currentDfc.projectId;
+            const nextTypeDFC = (updateData.typeDFC as string | undefined) ?? currentDfc.typeDFC;
+            const nextDateReception = (updateData.dateReception as Date | null | undefined) ?? currentDfc.dateReception;
+            const nextDateReponse = Object.prototype.hasOwnProperty.call(updateData, "dateReponse")
+                ? ((updateData.dateReponse as Date | null | undefined) ?? null)
+                : currentDfc.dateReponse;
+            const nextAssignedToId = Object.prototype.hasOwnProperty.call(updateData, "assignedToId")
+                ? ((updateData.assignedToId as string | null | undefined) ?? null)
+                : (currentDfc.assignedToId ?? currentDfc.createdById);
+
+            const sla = await computeSlaForDfc({
+                projectId: nextProjectId,
+                typeDFC: nextTypeDFC,
+                dateReception: nextDateReception,
+                dateReponse: nextDateReponse,
+            });
+
+            updateData.delaiReponse = sla.delaiReponse;
+            updateData.slaDelayDays = sla.slaDelayDays;
+            updateData.slaDueDate = sla.slaDueDate;
+            updateData.isOverdue = sla.isOverdue;
+            updateData.overdueSince = sla.overdueSince;
 
             const incomingDerogations = Array.isArray(body.derogations)
                 ? (body.derogations as DerogationPayload[]).filter((entry) => entry && typeof entry === "object")
@@ -302,8 +323,26 @@ export async function PUT(
                 await tx.dFCHistory.createMany({ data: historyEntries });
             }
 
+            if (sla.isOverdue && nextAssignedToId) {
+                pendingNotification = {
+                    userId: nextAssignedToId,
+                    dfcId: id,
+                    numero: updated.numero,
+                    projectName: updated.project.name,
+                };
+            }
+
             return updated;
         });
+
+        if (pendingNotification) {
+            await createOverdueNotification({
+                dfcId: pendingNotification.dfcId,
+                numero: pendingNotification.numero,
+                projectName: pendingNotification.projectName,
+                userId: pendingNotification.userId,
+            });
+        }
 
         return NextResponse.json(dfc);
     } catch (err) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionOrFail } from "@/lib/api-helpers";
+import { syncOverdueDfcsAndNotify } from "@/lib/sla";
 
 type SortDirection = "asc" | "desc";
 
@@ -80,6 +81,8 @@ export async function GET(request: NextRequest) {
     const { error } = await getSessionOrFail();
     if (error) return error;
 
+    await syncOverdueDfcsAndNotify();
+
     // Parse filter parameters
     const { searchParams } = new URL(request.url);
     const dateStart = searchParams.get("dateStart");
@@ -90,6 +93,7 @@ export async function GET(request: NextRequest) {
     const statut = searchParams.get("statut"); // open | closed
     const responsableId = searchParams.get("responsableId");
     const faisabilite = searchParams.get("faisabilite"); // OUI | NON | EN_COURS | A_CLARIFIER
+    const overdueOnly = searchParams.get("overdueOnly");
     const sortBy = searchParams.get("sortBy") || "performanceScore";
     const order = searchParams.get("order") === "asc" ? "asc" : "desc";
     const thresholdDelai = Number(searchParams.get("thresholdDelai") || 14);
@@ -115,6 +119,10 @@ export async function GET(request: NextRequest) {
     if (statut === "closed") where.dateReponse = { not: null };
     if (responsableId) where.assignedToId = responsableId;
     if (faisabilite) where.faisabilite = faisabilite;
+    if (overdueOnly === "true") {
+        where.isOverdue = true;
+        where.dateReponse = null;
+    }
 
     const [
         totalDFC,
@@ -126,6 +134,9 @@ export async function GET(request: NextRequest) {
         recentDFCs,
         allDFCs,
         allDfcsForPerformance,
+        overdueCount,
+        overdueByProjectRaw,
+        overdueRenault,
     ] = await Promise.all([
         prisma.dFC.count({ where }),
         prisma.dFC.count({ where: { ...where, dateReponse: null } }),
@@ -158,6 +169,40 @@ export async function GET(request: NextRequest) {
                 faisabilite: true,
             },
         }),
+        prisma.dFC.count({
+            where: {
+                ...where,
+                isOverdue: true,
+                dateReponse: null,
+            },
+        }),
+        prisma.dFC.groupBy({
+            by: ["projectId"],
+            where: {
+                ...where,
+                isOverdue: true,
+                dateReponse: null,
+            },
+            _count: { id: true },
+        }),
+        prisma.dFC.findMany({
+            where: {
+                ...where,
+                isOverdue: true,
+                dateReponse: null,
+                project: { name: "Renault" },
+            },
+            orderBy: [
+                { overdueSince: "asc" },
+                { dateReception: "asc" },
+            ],
+            take: 8,
+            include: {
+                project: { select: { name: true } },
+                assignedTo: { select: { id: true, nom: true, prenom: true, matricule: true } },
+                createdBy: { select: { nom: true, prenom: true, matricule: true } },
+            },
+        }),
     ]);
 
     // Calculate average response time
@@ -173,6 +218,11 @@ export async function GET(request: NextRequest) {
     const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
 
     const dfcByProjectNamed = dfcByProject.map((item) => ({
+        name: projectMap[item.projectId] || "Unknown",
+        count: item._count.id,
+    }));
+
+    const overdueByProject = (overdueByProjectRaw || []).map((item) => ({
         name: projectMap[item.projectId] || "Unknown",
         count: item._count.id,
     }));
@@ -339,6 +389,9 @@ export async function GET(request: NextRequest) {
         dfcByFaisabilite: dfcByFaisabiliteNamed,
         monthlyData,
         recentDFCs,
+        overdueCount,
+        overdueByProject,
+        overdueRenault: overdueRenault || [],
         responsablesPerformance,
         filterOptions: {
             projects: allProjects,

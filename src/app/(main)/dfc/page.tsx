@@ -17,6 +17,8 @@ interface DFC {
     typeDFC: string;
     dateReception: string;
     dateReponse: string | null;
+    isOverdue: boolean;
+    slaDueDate: string | null;
     project: { name: string };
     family: { name: string };
     phase: { name: string };
@@ -41,6 +43,7 @@ export default function DFCListPage() {
     const [typeFilter, setTypeFilter] = useState("");
     const [faisabiliteFilter, setFaisabiliteFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
+    const [overdueOnlyFilter, setOverdueOnlyFilter] = useState("");
     const [assignedToFilter, setAssignedToFilter] = useState(searchParams.get("assignedToId") || "");
     const [projects, setProjects] = useState<RefData["projects"]>([]);
     const [users, setUsers] = useState<RefData["users"]>([]);
@@ -54,6 +57,7 @@ export default function DFCListPage() {
         if (typeFilter) params.set("typeDFC", typeFilter);
         if (faisabiliteFilter) params.set("faisabilite", faisabiliteFilter);
         if (statusFilter) params.set("status", statusFilter);
+        if (overdueOnlyFilter) params.set("overdueOnly", overdueOnlyFilter);
         if (assignedToFilter) params.set("assignedToId", assignedToFilter);
 
         const res = await fetch(`/api/dfc?${params}`);
@@ -62,7 +66,7 @@ export default function DFCListPage() {
         setTotal(data.total);
         setTotalPages(data.totalPages);
         setLoading(false);
-    }, [page, search, projectFilter, typeFilter, faisabiliteFilter, statusFilter, assignedToFilter]);
+    }, [page, search, projectFilter, typeFilter, faisabiliteFilter, statusFilter, overdueOnlyFilter, assignedToFilter]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -147,6 +151,10 @@ export default function DFCListPage() {
                         <option value="open">Open</option>
                         <option value="closed">Closed</option>
                     </select>
+                    <select className="filter-select" value={overdueOnlyFilter} onChange={(e) => { setOverdueOnlyFilter(e.target.value); setPage(1); }}>
+                        <option value="">All delay status</option>
+                        <option value="true">Overdue only</option>
+                    </select>
                     <select className="filter-select" value={assignedToFilter} onChange={(e) => { setAssignedToFilter(e.target.value); setPage(1); }}>
                         <option value="">All responsibles</option>
                         {users.map((u) => (
@@ -173,6 +181,7 @@ export default function DFCListPage() {
                                     <th>Feasibility</th>
                                     <th>Received date</th>
                                     <th>Status</th>
+                                    <th>Delay status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -180,14 +189,14 @@ export default function DFCListPage() {
                                 {loading ? (
                                     Array.from({ length: 5 }).map((_, i) => (
                                         <tr key={i}>
-                                            {Array.from({ length: 10 }).map((_, j) => (
+                                            {Array.from({ length: 11 }).map((_, j) => (
                                                 <td key={j}><div className="skeleton" style={{ height: 16, width: "80%" }} /></td>
                                             ))}
                                         </tr>
                                     ))
                                 ) : dfcs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={10} style={{ textAlign: "center", padding: 40 }}>
+                                        <td colSpan={11} style={{ textAlign: "center", padding: 40 }}>
                                             No DFC found
                                         </td>
                                     </tr>
@@ -217,6 +226,11 @@ export default function DFCListPage() {
                                             <td>
                                                 <span className={`badge ${dfc.dateReponse ? "badge-success" : "badge-warning"}`}>
                                                     {dfc.dateReponse ? statusLabels.closed : statusLabels.open}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className={`badge ${dfc.isOverdue ? "badge-danger" : "badge-success"}`}>
+                                                    {dfc.isOverdue ? "Overdue" : "On time"}
                                                 </span>
                                             </td>
                                             <td>

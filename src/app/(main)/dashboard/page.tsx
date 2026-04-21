@@ -19,6 +19,7 @@ interface Stats {
     dfcOuverts: number;
     dfcFermes: number;
     delaiMoyen: number;
+    overdueCount: number;
     dfcByType: { name: string; count: number }[];
     dfcByProject: { name: string; count: number }[];
     dfcByFaisabilite: { name: string; count: number }[];
@@ -45,6 +46,7 @@ const emptyFilters: FilterValues = {
     statut: "",
     responsableId: "",
     faisabilite: "",
+    overdueOnly: "",
 };
 
 export default function DashboardPage() {
@@ -142,6 +144,13 @@ export default function DashboardPage() {
                         </div>
                         <div className="stat-card-label">Average lead time (days)</div>
                         <div className="stat-card-value">{stats.delaiMoyen}</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-card-header">
+                            <div className="stat-card-icon red"><FiAlertCircle /></div>
+                        </div>
+                        <div className="stat-card-label">Overdue DFCs</div>
+                        <div className="stat-card-value">{stats.overdueCount}</div>
                     </div>
                 </div>
 

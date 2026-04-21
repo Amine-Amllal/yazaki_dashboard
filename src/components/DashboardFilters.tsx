@@ -12,6 +12,7 @@ export interface FilterValues {
     statut: string;
     responsableId: string;
     faisabilite: string;
+    overdueOnly: string;
 }
 
 export interface FilterOptions {
@@ -36,6 +37,7 @@ const emptyFilters: FilterValues = {
     statut: "",
     responsableId: "",
     faisabilite: "",
+    overdueOnly: "",
 };
 
 export default function DashboardFilters({ filters, filterOptions, onFilterChange, onApply }: DashboardFiltersProps) {
@@ -149,6 +151,18 @@ export default function DashboardFilters({ filters, filterOptions, onFilterChang
                                 <option value="">All statuses</option>
                                 <option value="open">Open</option>
                                 <option value="closed">Closed</option>
+                            </select>
+                        </div>
+
+                        <div className="filter-group">
+                            <label className="filter-label">Delay status</label>
+                            <select
+                                className="filter-input"
+                                value={filters.overdueOnly}
+                                onChange={(e) => handleChange("overdueOnly", e.target.value)}
+                            >
+                                <option value="">All</option>
+                                <option value="true">Overdue only</option>
                             </select>
                         </div>
 
