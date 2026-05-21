@@ -54,6 +54,7 @@ const emptyFilters: FilterValues = {
     statut: "",
     responsableId: "",
     faisabilite: "",
+    overdueOnly: "",
 };
 
 const difficultyColors = ["#06d6a0", "#ffd166", "#ef476f"];

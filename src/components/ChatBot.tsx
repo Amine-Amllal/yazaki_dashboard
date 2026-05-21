@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import {
     FiMessageSquare,
     FiX,
@@ -55,7 +55,7 @@ export default function ChatBot() {
         }
     }, [isOpen]);
 
-    // Vérifier la connexion au service RAG
+    // Check RAG service connection
     const checkConnection = useCallback(async () => {
         try {
             const res = await fetch("/api/chat", {
@@ -157,28 +157,42 @@ export default function ChatBot() {
         ]);
     };
 
-    const formatContent = (content: string) => {
-        // Convertir les listes à puces markdown simples
-        return content.split("\n").map((line, i) => {
-            if (line.startsWith("- ") || line.startsWith("• ")) {
+    const renderInlineMarkdown = (text: string): ReactNode[] => {
+        const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+        return parts.map((part, idx) => {
+            if (part.startsWith("**") && part.endsWith("**")) {
+                return <strong key={idx}>{part.slice(2, -2)}</strong>;
+            }
+            return <span key={idx}>{part}</span>;
+        });
+    };
+
+    const formatContent = (content: string) =>
+        content.split("\n").map((line, i) => {
+            const trimmed = line.trim();
+
+            if (trimmed === "") return <br key={i} />;
+
+            if (/^[-*]\s+/.test(trimmed)) {
+                const itemText = trimmed.replace(/^[-*]\s+/, "");
                 return (
                     <div key={i} className="chatbot-list-item">
-                        <span className="chatbot-bullet">•</span>
-                        <span>{line.slice(2)}</span>
+                        <span className="chatbot-bullet">-</span>
+                        <span>{renderInlineMarkdown(itemText)}</span>
                     </div>
                 );
             }
-            if (line.startsWith("**") && line.endsWith("**")) {
+
+            if (/^\*\*[^*]+\*\*$/.test(trimmed)) {
                 return (
                     <strong key={i} style={{ display: "block", marginTop: 4 }}>
-                        {line.replace(/\*\*/g, "")}
+                        {trimmed.slice(2, -2)}
                     </strong>
                 );
             }
-            if (line.trim() === "") return <br key={i} />;
-            return <p key={i} style={{ margin: "2px 0" }}>{line}</p>;
+
+            return <p key={i} style={{ margin: "2px 0" }}>{renderInlineMarkdown(line)}</p>;
         });
-    };
 
     return (
         <>

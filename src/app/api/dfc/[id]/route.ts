@@ -336,11 +336,12 @@ export async function PUT(
         });
 
         if (pendingNotification) {
+            const notif = pendingNotification as { userId: string; dfcId: string; numero: number; projectName: string };
             await createOverdueNotification({
-                dfcId: pendingNotification.dfcId,
-                numero: pendingNotification.numero,
-                projectName: pendingNotification.projectName,
-                userId: pendingNotification.userId,
+                dfcId: notif.dfcId,
+                numero: notif.numero,
+                projectName: notif.projectName,
+                userId: notif.userId,
             });
         }
 

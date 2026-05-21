@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# ChromaDB vector store
+AI-service/chroma_db_yecms/

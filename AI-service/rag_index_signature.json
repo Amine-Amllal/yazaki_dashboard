@@ -1,8 +1,8 @@
 {
-  "db_path": "C:\\Users\\saada\\Downloads\\new yazaki\\yazaki_dashboard\\prisma\\dev.db",
-  "signature": "ebd16c35bd384a779cb2793150aadc7e6979d0223990758ce376389ba0aa32ad",
-  "saved_at": "2026-04-16T23:35:10.469817",
-  "doc_count": 15,
+  "db_path": "C:\\Users\\Idea\\Documents\\Projects Code\\yazaki_dashboard\\prisma\\dev.db",
+  "signature": "ab355d0fcf18e6d9a6951c1916c68869d28f90811e8d062035cca17fc0bbb2c3",
+  "saved_at": "2026-05-21T21:04:06.112182",
+  "doc_count": 27,
   "tables": [
     "Project",
     "Family",
