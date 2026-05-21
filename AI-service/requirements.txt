@@ -6,3 +6,6 @@ langchain-community
 langchain-google-genai
 langchain-core
 langchain-huggingface
+requests>=2.32.3,<3
+urllib3>=2.2.2,<3
+charset-normalizer>=3.3.2,<4
